@@ -1,0 +1,9 @@
+.global-footer{
+  position: relative;
+  padding: 16px;
+  text-align: center;
+  width: 100%;
+  background-color: #efefef;
+  margin-top: 20px;
+  z-index: 1;
+}

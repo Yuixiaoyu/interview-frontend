@@ -1,0 +1,944 @@
+#interviewPage {
+    background: #f8fafd;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.interview-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    padding-bottom: 40px;
+    flex: 1;
+}
+
+/* 页面头部样式 */
+.interview-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.interview-header h3 {
+    margin-bottom: 8px;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.interview-subtitle {
+    color: #5a5a6e;
+    font-size: 14px;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* 主内容区域 - 两区域布局 */
+.main-section {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+/* 左侧信息区域 */
+.info-section {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 右侧上传区域 */
+.upload-section {
+    flex: 1;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    height: min-content;
+    align-self: flex-start;
+}
+
+/* 通用标题样式 */
+.section-title {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+}
+
+.section-title.small {
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.section-icon {
+    color: #7C3AED;
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+/* 信息提示样式 */
+.info-message {
+    display: flex;
+    align-items: center;
+    background: rgba(24, 144, 255, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.info-icon {
+    color: #1890ff;
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.info-text {
+    color: #555;
+    font-size: 14px;
+}
+
+/* 上传区域样式 */
+.upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 0;
+}
+
+.upload-component {
+    width: 100%;
+    text-align: center;
+}
+
+.upload-button {
+    background: #7C3AED;
+    border-color: #7C3AED;
+    color: white;
+    height: 40px;
+    padding: 0 24px;
+}
+
+.upload-button:hover {
+    background: #6025c0;
+    border-color: #6025c0;
+}
+
+.upload-hint {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+}
+
+.upload-success {
+    display: flex;
+    align-items: flex-start;
+    background-color: rgba(82, 196, 26, 0.1);
+    padding: 16px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.success-icon {
+    color: #52c41a;
+    margin-right: 12px;
+    font-size: 18px;
+    margin-top: 2px;
+}
+
+.success-content {
+    flex: 1;
+}
+
+.success-text {
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* 操作按钮区域 */
+.action-button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.start-button {
+    background: #7C3AED;
+    border-color: #7C3AED;
+    height: 44px;
+    font-size: 16px;
+    padding: 0 30px;
+    width: 100%;
+}
+
+.start-button:hover,
+.start-button:focus {
+    background: #6025c0;
+    border-color: #6025c0;
+}
+
+.analyze-button {
+    background: #1890ff;
+    border-color: #1890ff;
+    width: 100%;
+}
+
+.analyze-button:hover,
+.analyze-button:focus {
+    background: #40a9ff;
+    border-color: #40a9ff;
+}
+
+/* 文件操作区域 */
+.file-actions {
+    margin-top: 10px;
+    text-align: right;
+}
+
+.preview-button {
+    padding: 0;
+}
+
+/* 分析结果区域 */
+.analysis-section {
+    margin-top: 24px;
+    margin-bottom: 80px;
+    position: relative;
+    z-index: 2;
+}
+
+.analysis-card {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+}
+
+.analysis-card .ant-card-head {
+    border-bottom-color: #f0f0f0;
+    padding: 0 16px;
+}
+
+.analysis-card .ant-card-body {
+    padding: 16px;
+}
+
+.analyzing-initial {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    gap: 16px;
+}
+
+.analyzing-indicator {
+    padding: 10px 0;
+    text-align: center;
+    margin-top: 10px;
+    border-top: 1px dashed #eee;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.markdown-result-container {
+    position: relative;
+}
+
+.markdown-result {
+    padding: 16px;
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.scroll-helper {
+    text-align: center;
+    color: #999;
+    font-size: 12px;
+    padding: 8px 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+/* 优化滚动条样式 */
+.markdown-result::-webkit-scrollbar {
+    width: 6px;
+}
+
+.markdown-result::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.markdown-result::-webkit-scrollbar-track {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 分析错误样式 */
+.analysis-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    text-align: center;
+}
+
+.analysis-error .ant-alert {
+    margin-bottom: 16px;
+    width: 100%;
+    max-width: 500px;
+}
+
+/* 打字机效果 */
+.markdown-result p:last-child {
+    border-right: 2px solid #1890ff;
+    animation: blink-caret 0.75s step-end infinite;
+    white-space: pre-wrap;
+}
+
+@keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: #1890ff }
+}
+
+.markdown-result h1,
+.markdown-result h2 {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin-top: 24px;
+}
+
+.markdown-result ul,
+.markdown-result ol {
+    padding-left: 24px;
+}
+
+.markdown-result pre {
+    background-color: #f6f8fa;
+    border-radius: 6px;
+    padding: 16px;
+    overflow-x: auto;
+}
+
+.markdown-result code {
+    background-color: rgba(175, 184, 193, 0.2);
+    border-radius: 6px;
+    padding: 0.2em 0.4em;
+    font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+.markdown-result blockquote {
+    border-left: 4px solid #dfe2e5;
+    padding-left: 16px;
+    color: #6a737d;
+    margin-left: 0;
+}
+
+.markdown-result table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.markdown-result table th,
+.markdown-result table td {
+    border: 1px solid #dfe2e5;
+    padding: 6px 13px;
+}
+
+.markdown-result table th {
+    background-color: #f6f8fa;
+    font-weight: 600;
+}
+
+/* 流程步骤样式 */
+.flow-wrapper {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 20px;
+}
+
+.flow-steps {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+}
+
+.flow-step-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(124, 58, 237, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    color: #7C3AED;
+    font-size: 20px;
+}
+
+.flow-step-icon.step-done {
+    background: #7C3AED;
+    color: white;
+}
+
+.flow-step-info {
+    text-align: center;
+    width: 100%;
+}
+
+.flow-step-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.flow-step-desc {
+    color: #666;
+    font-size: 12px;
+}
+
+.flow-step-arrow {
+    position: absolute;
+    right: -12px;
+    top: 24px;
+    font-size: 14px;
+    color: #999;
+    z-index: 1;
+}
+
+/* 注意事项样式 */
+.tips-wrapper {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 20px;
+}
+
+.tips-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.tip-item {
+    display: flex;
+    align-items: flex-start;
+}
+
+.tip-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(124, 58, 237, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    color: #7C3AED;
+    flex-shrink: 0;
+}
+
+.tip-content {
+    flex: 1;
+}
+
+.tip-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.tip-description {
+    color: #666;
+    font-size: 12px;
+}
+
+/* 统计部分 */
+.stats-wrapper {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 20px;
+}
+
+.stats-items {
+    display: flex;
+    gap: 16px;
+}
+
+.stat-item {
+    text-align: center;
+    flex: 1;
+    padding: 12px;
+    background: rgba(124, 58, 237, 0.02);
+    border-radius: 8px;
+}
+
+.stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(124, 58, 237, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    color: #7C3AED;
+    font-size: 18px;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #7C3AED;
+    margin-bottom: 4px;
+}
+
+.stat-title {
+    font-size: 13px;
+    color: #666;
+}
+
+/* 模态框样式 */
+.interview-modal .ant-modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.modal-title {
+    display: flex;
+    align-items: center;
+}
+
+.modal-icon {
+    color: #7C3AED;
+    font-size: 18px;
+    margin-right: 8px;
+}
+
+.modal-content {
+    padding: 10px 0;
+}
+
+/* 进度指示器 */
+.modal-progress {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding: 10px 30px;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.progress-step .step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    margin-bottom: 8px;
+    transition: all 0.3s;
+}
+
+.progress-step.active .step-icon {
+    background-color: #7C3AED;
+    color: white;
+    box-shadow: 0 3px 8px rgba(124, 58, 237, 0.3);
+}
+
+.progress-step .step-text {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+}
+
+.progress-step.active .step-text {
+    color: #7C3AED;
+    font-weight: 600;
+}
+
+.progress-line {
+    flex-grow: 1;
+    height: 2px;
+    background: #f0f0f0;
+    margin: 0 10px;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.progress-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: #7C3AED;
+    transform-origin: left;
+    transition: transform 0.5s ease;
+    transform: scaleX(0); /* 默认没有进度 */
+}
+
+.progress-line.active::after {
+    transform: scaleX(1); /* 激活时显示完整进度 */
+}
+
+/* 环境检查部分 */
+.check-section {
+    background: #f8fafd;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.check-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.check-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.check-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #eee;
+}
+
+/* 提示卡片样式 */
+.tips-card {
+    margin-bottom: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.tips-card .ant-card-body {
+    padding: 0;
+}
+
+.tips-header {
+    padding: 12px 16px;
+    background-color: rgba(124, 58, 237, 0.05);
+    color: #333;
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.tips-columns {
+    display: flex;
+    padding: 16px;
+}
+
+.tips-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.tip-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(124, 58, 237, 0.08);
+    color: #7C3AED;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.tip-info {
+    flex: 1;
+}
+
+.tip-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.tip-desc {
+    color: #666;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* 面试信息 */
+.interview-info {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+.info-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #555;
+}
+
+.info-item span {
+    font-weight: 500;
+}
+
+/* 底部操作区 */
+.modal-footer {
+    margin-top: 24px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 20px;
+}
+
+.footer-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-button {
+    background: #7C3AED;
+    border-color: #7C3AED;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 42px;
+    font-size: 16px;
+    padding: 0 24px;
+}
+
+.modal-button:hover {
+    background: #6025c0;
+    border-color: #6025c0;
+}
+
+/* 响应式调整 */
+@media (max-width: 992px) {
+    .main-section {
+        flex-direction: column;
+    }
+    
+    .upload-section {
+        width: 100%;
+        order: -1; /* 在移动设备上将上传区域放在前面 */
+    }
+    
+    .flow-steps {
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    
+    .flow-step {
+        flex: 0 0 calc(50% - 8px);
+        margin-bottom: 16px;
+    }
+    
+    .flow-step-arrow {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .interview-container {
+        padding: 16px;
+    }
+    
+    .tips-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-items {
+        flex-wrap: wrap;
+    }
+    
+    .stat-item {
+        flex: 0 0 calc(50% - 8px);
+        margin-bottom: 16px;
+    }
+    
+    .analysis-section {
+        margin-bottom: 100px;
+    }
+    
+    .markdown-result {
+        max-height: 450px;
+    }
+    
+    .analysis-card .ant-card-head {
+        padding: 0 12px;
+    }
+    
+    .analysis-card .ant-card-body {
+        padding: 12px;
+    }
+    
+    .scroll-helper {
+        font-size: 11px;
+        padding: 6px 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .interview-container {
+        padding: 12px;
+    }
+    
+    .interview-header h3 {
+        font-size: 22px;
+    }
+    
+    .section-title {
+        font-size: 15px;
+    }
+    
+    .upload-section,
+    .flow-wrapper,
+    .tips-wrapper,
+    .stats-wrapper {
+        padding: 16px;
+    }
+    
+    .flow-step {
+        flex: 0 0 100%;
+    }
+    
+    .stat-item {
+        flex: 0 0 100%;
+    }
+    
+    .modal-progress {
+        padding: 5px;
+    }
+    
+    .progress-step .step-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .check-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tips-columns {
+        flex-direction: column;
+        padding: 12px;
+        gap: 16px;
+    }
+    
+    .interview-info {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .footer-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+    
+    .footer-actions button {
+        width: 100%;
+    }
+}
+
+/* 设备测试状态样式 */
+.check-item .ant-badge-status-processing .ant-badge-status-dot {
+    animation: ant-badge-status-processing 1.2s infinite ease-in-out;
+}
+
+.check-item .ant-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 进度条图标动画 */
+.progress-step .step-icon .anticon-loading {
+    animation: loadingCircle 1s infinite linear;
+}
+
+@keyframes loadingCircle {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes ant-badge-status-processing {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(2.4);
+        opacity: 0;
+    }
+}

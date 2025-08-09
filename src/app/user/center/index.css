@@ -1,0 +1,157 @@
+#userCenterPage {
+    width: 100%;
+    padding: 16px 0;
+}
+
+/* 用户个人资料卡片 */
+.user-profile-card {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.profile-header {
+    height: 120px;
+    background: linear-gradient(90deg, #1890ff, #52c41a);
+    position: relative;
+}
+
+.profile-avatar {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -50px;
+    display: flex;
+    justify-content: center;
+}
+
+.user-name {
+    margin-top: 55px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-role-tag {
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+.user-bio {
+    text-align: center;
+    margin: 16px 0;
+}
+
+.user-info {
+    padding-top: 8px;
+}
+
+.user-stats {
+    text-align: center;
+}
+
+/* 内容卡片 */
+.content-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.tab-content {
+    padding: 16px 0;
+}
+
+.calendar-container {
+    margin: 16px 0;
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+/* 成就卡片 */
+.achievement-card {
+    height: 100%;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s;
+}
+
+.achievement-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.achievement-card.locked {
+    background-color: #f5f5f5;
+    opacity: 0.7;
+}
+
+.achievement-icon {
+    font-size: 32px;
+    margin-bottom: 16px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #e6f7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1890ff;
+}
+
+.achievement-icon.locked {
+    background: #f0f0f0;
+    color: #bfbfbf;
+}
+
+.achievement-content {
+    text-align: center;
+    width: 100%;
+}
+
+/* 技能分析 */
+.skill-item {
+    margin-bottom: 16px;
+}
+
+.skill-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.suggestion-card {
+    background: #f6ffed;
+    border: 1px solid #b7eb8f;
+    border-radius: 8px;
+}
+
+.suggestion-action {
+    margin-top: 16px;
+    text-align: right;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .profile-header {
+        height: 100px;
+    }
+    
+    .profile-avatar {
+        bottom: -45px;
+    }
+    
+    .user-name {
+        margin-top: 50px !important;
+        flex-direction: column;
+    }
+    
+    .user-role-tag {
+        margin-left: 0;
+        margin-top: 4px;
+    }
+}
