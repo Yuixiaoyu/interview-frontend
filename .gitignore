@@ -3,6 +3,7 @@
 
 # custom
 .cursor
+.cursor/mcp.json
 
 # dependencies
 /node_modules
@@ -38,4 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/.cursor/
 /.cursor/

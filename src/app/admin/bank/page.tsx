@@ -1,15 +1,12 @@
 "use client";
 import CreateModal from "./components/CreateModal";
 import UpdateModal from "./components/UpdateModal";
-import {
-  deleteQuestionBank,
-  listQuestionBankByPage,
-} from "@/api/questionBankController";
-import { PlusOutlined } from "@ant-design/icons";
-import type { ActionType, ProColumns } from "@ant-design/pro-components";
-import { PageContainer, ProTable } from "@ant-design/pro-components";
-import { Button, message, Space, Typography } from "antd";
-import React, { useRef, useState } from "react";
+import {deleteQuestionBank, listQuestionBankByPage,} from "@/api/questionBankController";
+import {PlusOutlined} from "@ant-design/icons";
+import type {ActionType, ProColumns} from "@ant-design/pro-components";
+import {PageContainer, ProTable} from "@ant-design/pro-components";
+import {Button, message, Space, Typography} from "antd";
+import React, {useRef, useState} from "react";
 import "./index.css";
 
 /**
@@ -147,7 +144,7 @@ const QuestionBankAdminPage: React.FC = () => {
           const sortField = Object.keys(sort)?.[0];
           const sortOrder = sort?.[sortField] ?? undefined;
 
-          const {code, data  } = await listQuestionBankByPage({
+          const { code, data } = await listQuestionBankByPage({
             ...params,
             sortField,
             sortOrder,

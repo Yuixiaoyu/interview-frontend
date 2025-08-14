@@ -13,7 +13,9 @@ import {
   UserGroupIcon,
   VideoCameraIcon,
 } from "@heroicons/react/24/outline";
+import { VideoCameraIcon as VideoCameraSolidIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import ParticleCanvas from "./components/ParticleCanvas";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -166,9 +168,10 @@ export default function HomePage() {
           <motion.div variants={fadeIn} className="hero-image-container">
             <div className="hero-image">
               <div className="hero-image-overlay"></div>
+              <ParticleCanvas className="hero-particles" density={0.00008} alpha={0.6} />
               <div className="hero-image-content">
                 <div className="hero-image-icon">
-                  <VideoCameraIcon className="w-16 h-16" />
+                  <VideoCameraSolidIcon className="w-16 h-16" />
                 </div>
                 <div className="hero-image-text">
                   <h3>AI 模拟面试</h3>
