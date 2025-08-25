@@ -10,6 +10,7 @@ import * as postThumbController from "./postThumbController";
 import * as postFavourController from "./postFavourController";
 import * as postController from "./postController";
 import * as fileController from "./fileController";
+import * as aiInterviewController from "./aiInterviewController";
 import * as analyzeController from "./analyzeController";
 import * as speechController from "./speechController";
 export default {
@@ -21,6 +22,7 @@ export default {
   postFavourController,
   postController,
   fileController,
+  aiInterviewController,
   analyzeController,
   speechController,
 };

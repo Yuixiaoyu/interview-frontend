@@ -1,4 +1,22 @@
 declare namespace API {
+  type AiInterviewRecords = {
+    id?: number;
+    content?: string;
+    sessionId?: string;
+    userId?: number;
+    type?: string;
+    score?: number;
+    createTime?: string;
+  };
+
+  type AiSession = {
+    id?: number;
+    name?: string;
+    sessionId?: string;
+    userId?: number;
+    createTime?: string;
+  };
+
   type analyzeVideoParams = {
     url: string;
   };
@@ -12,6 +30,18 @@ declare namespace API {
   type BaseResponseInteger = {
     code?: number;
     data?: number;
+    message?: string;
+  };
+
+  type BaseResponseListAiInterviewRecords = {
+    code?: number;
+    data?: AiInterviewRecords[];
+    message?: string;
+  };
+
+  type BaseResponseListAiSession = {
+    code?: number;
+    data?: AiSession[];
     message?: string;
   };
 
@@ -158,6 +188,10 @@ declare namespace API {
     period?: string;
     gpa?: string;
     relevant_courses?: string[];
+  };
+
+  type getInterviewDetailBySessionIdParams = {
+    sessionId: string;
   };
 
   type getPostVOByIdParams = {
