@@ -8,7 +8,7 @@ export async function streamAnalyzeFile(
   params: API.streamAnalyzeFileParams,
   options?: { [key: string]: any }
 ) {
-  return request<API.SseEmitter>(`${/api/}/analyze/fileStream`, {
+  return request<API.SseEmitter>("/analyze/fileStream", {
     method: "GET",
     params: {
       ...params,
@@ -17,14 +17,14 @@ export async function streamAnalyzeFile(
   });
 }
 
-/** 此处后端没有提供注释 POST /analyze/videoStream */
+/** 此处后端没有提供注释 GET /analyze/videoStream */
 export async function analyzeVideo(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.analyzeVideoParams,
   options?: { [key: string]: any }
 ) {
-  return request<API.SseEmitter>(`${/api/}/analyze/videoStream`, {
-    method: "POST",
+  return request<API.SseEmitter>("/analyze/videoStream", {
+    method: "GET",
     params: {
       ...params,
     },

@@ -7,7 +7,7 @@ export async function addQuestionBankQuestion(
   body: API.QuestionBankQuestionAddRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseLong>(`${/api/}/questionBankQuestion/add`, {
+  return request<API.BaseResponseLong>("/questionBankQuestion/add", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -22,17 +22,14 @@ export async function saveBathQuestionToBank(
   body: API.QuestionBankQuestionBatchAddRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(
-    `${/api/}/questionBankQuestion/add/batch`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: body,
-      ...(options || {}),
-    }
-  );
+  return request<API.BaseResponseBoolean>("/questionBankQuestion/add/batch", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
 }
 
 /** 此处后端没有提供注释 POST /questionBankQuestion/delete */
@@ -40,17 +37,14 @@ export async function deleteQuestionBankQuestion(
   body: API.DeleteRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(
-    `${/api/}/questionBankQuestion/delete`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: body,
-      ...(options || {}),
-    }
-  );
+  return request<API.BaseResponseBoolean>("/questionBankQuestion/delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
 }
 
 /** 此处后端没有提供注释 GET /questionBankQuestion/get/vo */
@@ -60,7 +54,7 @@ export async function getQuestionBankQuestionVoById(
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponseQuestionBankQuestionVO>(
-    `${/api/}/questionBankQuestion/get/vo`,
+    "/questionBankQuestion/get/vo",
     {
       method: "GET",
       params: {
@@ -77,7 +71,7 @@ export async function listQuestionBankQuestionByPage(
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponsePageQuestionBankQuestion>(
-    `${/api/}/questionBankQuestion/list/page`,
+    "/questionBankQuestion/list/page",
     {
       method: "POST",
       headers: {
@@ -95,7 +89,7 @@ export async function listQuestionBankQuestionVoByPage(
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponsePageQuestionBankQuestionVO>(
-    `${/api/}/questionBankQuestion/list/page/vo`,
+    "/questionBankQuestion/list/page/vo",
     {
       method: "POST",
       headers: {
@@ -113,7 +107,7 @@ export async function listMyQuestionBankQuestionVoByPage(
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponsePageQuestionBankQuestionVO>(
-    `${/api/}/questionBankQuestion/my/list/page/vo`,
+    "/questionBankQuestion/my/list/page/vo",
     {
       method: "POST",
       headers: {
@@ -130,17 +124,14 @@ export async function removeQuestionBankQuestion(
   body: API.QuestionBankQuestionRemoveRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(
-    `${/api/}/questionBankQuestion/remove`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: body,
-      ...(options || {}),
-    }
-  );
+  return request<API.BaseResponseBoolean>("/questionBankQuestion/remove", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
 }
 
 /** 此处后端没有提供注释 POST /questionBankQuestion/remove/batch */
@@ -149,7 +140,7 @@ export async function removeBathQuestionFromBank(
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponseBoolean>(
-    `${/api/}/questionBankQuestion/remove/batch`,
+    "/questionBankQuestion/remove/batch",
     {
       method: "POST",
       headers: {
@@ -166,15 +157,12 @@ export async function updateQuestionBankQuestion(
   body: API.QuestionBankQuestionUpdateRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(
-    `${/api/}/questionBankQuestion/update`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: body,
-      ...(options || {}),
-    }
-  );
+  return request<API.BaseResponseBoolean>("/questionBankQuestion/update", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
 }

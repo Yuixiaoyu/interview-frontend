@@ -8,8 +8,7 @@ import { useMediaDevices } from "./hooks/useMediaDevices";
 import { useScreenRecording } from "./hooks/useScreenRecording";
 import { useVoiceRecognition } from "./hooks/useVoiceRecognition";
 import ChatMessages, { type ChatMessage } from "./components/ChatMessages";
-
-const { Title, Text } = Typography;
+import LoadingOverlay from "./components/LoadingOverlay";
 
 // 为WebKit AudioContext添加类型定义
 interface WindowWithWebkitAudio extends Window {
@@ -121,20 +120,38 @@ export default function InterviewStartPage() {
     }, 1500);
   };
 
-  // Live2D 模型
+  // Live2D 模型加载状态
   const l2dRef = useRef<HTMLCanvasElement>(null);
   const model = useRef<Model>();
+  const [modelReady, setModelReady] = useState(false);
+  const [isModelLoading, setIsModelLoading] = useState(true);
+  
   useEffect(() => {
+    setIsModelLoading(true);
     import("l2d").then(({ init }) => {
       const l2d = init(l2dRef.current);
       l2d
         .create({ path: "https://model.hacxy.cn/kei_vowels_pro/kei_vowels_pro.model3.json" })
         .then((res) => {
           model.current = res;
+          setModelReady(true);
+          // 延迟关闭加载动画，让用户看到完整的加载体验
+          setTimeout(() => {
+            setIsModelLoading(false);
+          }, 1000);
+          console.log("模型加载成功");
+        })
+        .catch((error) => {
+          console.error("模型加载失败:", error);
+          // 即使加载失败也要关闭loading
+          setTimeout(() => {
+            setIsModelLoading(false);
+          }, 2000);
         });
     });
     return () => {
       model.current?.destroy();
+
     };
   }, []);
 
@@ -144,8 +161,6 @@ export default function InterviewStartPage() {
       if (isRecording) stopScreen();
     };
   }, [isRecording, stopScreen]);
-
-  const { Title, Text } = Typography;
 
   const handleEndInterview = () => {
     if (isRecording) {
@@ -171,7 +186,9 @@ export default function InterviewStartPage() {
   };
 
   return (
-    <div className="interview-start-container">
+    <>
+      <LoadingOverlay isVisible={isModelLoading} />
+      <div className="interview-start-container">
       <Modal
         title="面试录制设置"
         open={showRecordingModal}
@@ -242,7 +259,6 @@ export default function InterviewStartPage() {
         <div className="chat-area">
           <div className="chat-header">
             <div className="chat-title">面试对话记录</div>
-            <div className="chat-actions"></div>
           </div>
 
           <div className="conversation-container">
@@ -378,6 +394,7 @@ export default function InterviewStartPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

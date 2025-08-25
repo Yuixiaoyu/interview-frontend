@@ -187,6 +187,22 @@
     border-color: #6025c0;
 }
 
+.prepare-button {
+    background: #f0f0f0;
+    border-color: #d9d9d9;
+    color: #666;
+    height: 40px;
+    font-size: 14px;
+    width: 100%;
+}
+
+.prepare-button:hover,
+.prepare-button:focus {
+    background: #e8e8e8;
+    border-color: #bfbfbf;
+    color: #333;
+}
+
 .analyze-button {
     background: #1890ff;
     border-color: #1890ff;
@@ -550,6 +566,52 @@
 
 .modal-content {
     padding: 10px 0;
+    position: relative;
+}
+
+/* 模态框内的题目生成覆盖层 */
+.modal-generating-overlay {
+    position: absolute;
+    top: 0;
+    left: -24px;
+    right: -24px;
+    bottom: -24px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.generating-content {
+    text-align: center;
+    padding: 40px 20px;
+    max-width: 400px;
+}
+
+.generating-text {
+    margin-top: 20px;
+}
+
+.generating-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1890ff;
+    margin-bottom: 8px;
+}
+
+.generating-subtitle {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.progress-info {
+    margin-top: 8px;
+    font-size: 12px;
 }
 
 /* 进度指示器 */

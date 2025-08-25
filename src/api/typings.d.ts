@@ -21,6 +21,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseListString = {
+    code?: number;
+    data?: string[];
+    message?: string;
+  };
+
   type BaseResponseLoginUserVO = {
     code?: number;
     data?: LoginUserVO;
@@ -117,6 +123,12 @@ declare namespace API {
     message?: string;
   };
 
+  type BaseResponseResumeDocument = {
+    code?: number;
+    data?: ResumeDocument;
+    message?: string;
+  };
+
   type BaseResponseString = {
     code?: number;
     data?: string;
@@ -137,6 +149,15 @@ declare namespace API {
 
   type DeleteRequest = {
     id?: number;
+  };
+
+  type Education = {
+    degree?: string;
+    major?: string;
+    university?: string;
+    period?: string;
+    gpa?: string;
+    relevant_courses?: string[];
   };
 
   type getPostVOByIdParams = {
@@ -165,6 +186,13 @@ declare namespace API {
 
   type getUserVOByIdParams = {
     id: number;
+  };
+
+  type Internship = {
+    company?: string;
+    position?: string;
+    period?: string;
+    responsibilities?: string[];
   };
 
   type LoginUserVO = {
@@ -403,6 +431,14 @@ declare namespace API {
     hasFavour?: boolean;
   };
 
+  type Project = {
+    name?: string;
+    period?: string;
+    technologies?: string[];
+    description?: string;
+    achievements?: string[];
+  };
+
   type Question = {
     id?: number;
     title?: string;
@@ -588,6 +624,35 @@ declare namespace API {
     user?: UserVO;
   };
 
+  type Resume = {
+    job_target?: string;
+    basic_info_name?: string;
+    basic_info_email?: string;
+    basic_info_phone?: string;
+    basic_info_github?: string;
+    basic_info_linkedin?: string;
+    basic_info_location?: string;
+    education?: Education[];
+    technical_skills_programming_languages?: string[];
+    technical_skills_web_development?: string[];
+    technical_skills_database?: string[];
+    technical_skills_devops?: string[];
+    technical_skills_others?: string[];
+    projects?: Project[];
+    internships?: Internship[];
+    certifications?: string[];
+    additional_info_languages?: string[];
+    additional_info_interests?: string[];
+  };
+
+  type ResumeDocument = {
+    resume?: Resume;
+  };
+
+  type resumeUploadFileAnalyzeLocalParams = {
+    biz?: string;
+  };
+
   type SseEmitter = {
     timeout?: number;
   };
@@ -596,8 +661,12 @@ declare namespace API {
     fileUrl: string;
   };
 
+  type streamTTSParams = {
+    userInputText: string;
+  };
+
   type uploadFileParams = {
-    biz: string;
+    biz?: string;
   };
 
   type User = {

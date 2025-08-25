@@ -43,8 +43,7 @@ const UserLoginPage: React.FC = () => {
         form={form}
         logo={<Image src="/assets/logo.png" height={44} width={44} alt="给我一个offer" />}
         title="智面星图AI评测平台 用户登陆"
-        // subTitle="给我一个Offer团队开发~ "
-        subTitle="智眸识才团队开发~ "
+        subTitle="给我一个Offer团队开发~ "
         onFinish={doSubmit}
       >
         <ProFormText

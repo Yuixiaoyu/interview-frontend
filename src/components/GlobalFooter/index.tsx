@@ -19,8 +19,7 @@ export default function GlobalFooter() {
         paddingBlockStart: 12,
       }}
     >
-      {/*<div>© {currentYear} 给我一个Offer</div>*/}
-      <div>© {currentYear} 智眸识才团队</div>
+      <div>© {currentYear} 给我一个Offer</div>
       <div
         style={{
           fontSize: 16,
@@ -29,9 +28,7 @@ export default function GlobalFooter() {
           marginTop: 8,
         }}
       >
-      {/*作者： 给我一个Offer团队*/}
-      作者： 智眸识才团队
-
+      作者： 给我一个Offer团队
     </div>
     </div>
   )

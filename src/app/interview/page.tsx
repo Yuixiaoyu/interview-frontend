@@ -31,8 +31,10 @@ import {
   LoadingOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
-import { uploadFile } from "@/api/fileController";
+import { uploadFile, questionGet } from "@/api/fileController";
 import ReactMarkdown from "react-markdown";
+import { useRouter } from "next/navigation";
+import QuestionGeneratingOverlay from "./components/QuestionGeneratingOverlay";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -66,6 +68,13 @@ export default function InterViewPage() {
   const [showAnalysis, setShowAnalysis] = useState<boolean>(false);
   const [analysisError, setAnalysisError] = useState<boolean>(false);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const markdownRef = useRef<HTMLDivElement | null>(null);
+  const [showScrollHelper, setShowScrollHelper] = useState<boolean>(false);
+  
+  // 新增：模态框中的题目生成状态
+  const [modalQuestionGenerating, setModalQuestionGenerating] = useState<boolean>(false);
+  const [generationProgress, setGenerationProgress] = useState<number>(0);
+  const router = useRouter();
   
   // 新增：设备测试相关状态
   const [deviceTestStatus, setDeviceTestStatus] = useState<DeviceTestStatus>({
@@ -98,6 +107,31 @@ export default function InterViewPage() {
       }
     };
   }, [videoStream, audioStream]);
+
+  // 滚动提示可见性控制
+  const isNearBottom = (element: HTMLDivElement): boolean => {
+    const threshold = 8;
+    return element.scrollHeight - element.scrollTop - element.clientHeight <= threshold;
+  };
+
+  const updateScrollHelperVisibility = () => {
+    const container = markdownRef.current;
+    if (!container) {
+      setShowScrollHelper(false);
+      return;
+    }
+    const isScrollable = container.scrollHeight > container.clientHeight + 1;
+    const atBottom = isNearBottom(container);
+    setShowScrollHelper(analyzing && isScrollable && !atBottom);
+  };
+
+  useEffect(() => {
+    updateScrollHelperVisibility();
+  }, [analyzing, analysisResult, showAnalysis]);
+
+  const handleMarkdownScroll = () => {
+    updateScrollHelperVisibility();
+  };
 
   // 新增：摄像头测试功能
   const testCamera = async () => {
@@ -350,12 +384,124 @@ export default function InterViewPage() {
 
   // 关闭模态框
   const handleCancel = () => {
+    // 如果正在生成题目，取消生成
+    if (modalQuestionGenerating) {
+      handleModalCancelGeneration();
+    }
     setIsModalOpen(false);
+    // 重置模态框状态
+    setCurrentStep(resumeUploaded ? 1 : 0);
+    setModalQuestionGenerating(false);
+    setGenerationProgress(0);
   };
 
   // 处理开始面试按钮点击
   const handleStartInterview = () => {
     showModal();
+  };
+  
+  // 轮询检查题目生成状态
+  const pollQuestionGeneration = async (): Promise<void> => {
+    const maxAttempts = 60; // 最多尝试60次，每次间隔2秒，总共2分钟
+    let attempts = 0;
+    
+    const checkQuestions = async (): Promise<boolean> => {
+      try {
+        const response = await questionGet();
+        
+        // 检查响应是否包含题目数据
+        if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+          // 有题目数据，生成完成
+          return true;
+        }
+        
+        return false;
+      } catch (error) {
+        console.error("检查题目生成状态失败:", error);
+        return false;
+      }
+    };
+    
+    return new Promise((resolve, reject) => {
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        
+        // 更新进度（渐进式增长，但不超过90%）
+        const progressIncrement = Math.max(1, (90 - generationProgress) / (maxAttempts - attempts + 1));
+        setGenerationProgress(prev => Math.min(90, prev + progressIncrement));
+        
+        try {
+          const isComplete = await checkQuestions();
+          
+          if (isComplete) {
+            // 题目生成完成
+            clearInterval(pollInterval);
+            setGenerationProgress(100);
+            
+            // 显示完成状态1秒后跳转
+            setTimeout(() => {
+              setModalQuestionGenerating(false);
+              message.success("题目生成完成，正在跳转...");
+              router.push("/interview/start");
+              resolve();
+            }, 1000);
+            
+            return;
+          }
+          
+          if (attempts >= maxAttempts) {
+            // 超时，停止轮询
+            clearInterval(pollInterval);
+            setModalQuestionGenerating(false);
+            reject(new Error("题目生成超时，请稍后重试"));
+            return;
+          }
+          
+        } catch (error) {
+          clearInterval(pollInterval);
+          setModalQuestionGenerating(false);
+          reject(error);
+        }
+      }, 2000); // 每2秒检查一次
+    });
+  };
+  
+  // 取消题目生成（备用函数）
+  const handleCancelGeneration = () => {
+    // 这个函数已不再使用，保留作为备用
+    message.info("已取消题目生成");
+  };
+  
+  // 在模态框中开始面试的处理函数
+  const handleModalStartInterview = async () => {
+    if (!resumeUploaded) {
+      message.warning("请先上传简历文件");
+      return;
+    }
+    
+    // 在模态框中显示生成动画
+    setModalQuestionGenerating(true);
+    setGenerationProgress(0);
+    
+    try {
+      // 开始轮询检查题目生成状态
+      await pollQuestionGeneration();
+      
+      // 生成完成后关闭模态框
+      setIsModalOpen(false);
+      setModalQuestionGenerating(false);
+    } catch (error) {
+      console.error("题目生成失败:", error);
+      message.error("题目生成失败，请重试");
+      setModalQuestionGenerating(false);
+    }
+  };
+  
+  // 取消模态框中的题目生成
+  const handleModalCancelGeneration = () => {
+    setModalQuestionGenerating(false);
+    setGenerationProgress(0);
+    message.info("已取消题目生成");
   };
 
   // 处理简历分析按钮点击
@@ -401,10 +547,11 @@ export default function InterViewPage() {
             
             // 滚动到底部
             setTimeout(() => {
-              const resultElement = document.querySelector('.markdown-result');
+              const resultElement = markdownRef.current;
               if (resultElement) {
                 resultElement.scrollTop = resultElement.scrollHeight;
               }
+              updateScrollHelperVisibility();
             }, 10);
           }
           
@@ -421,6 +568,7 @@ export default function InterViewPage() {
             eventSource.close();
             eventSourceRef.current = null;
             setAnalyzing(false);
+            setShowScrollHelper(false);
           }
         } catch (error) {
           console.error("解析SSE数据出错:", error);
@@ -435,6 +583,7 @@ export default function InterViewPage() {
           eventSource.close();
           eventSourceRef.current = null;
           setAnalyzing(false);
+          setShowScrollHelper(false);
         }
       };
 
@@ -446,6 +595,7 @@ export default function InterViewPage() {
           eventSource.close();
           eventSourceRef.current = null;
           setAnalyzing(false);
+          setShowScrollHelper(false);
           return;
         }
         
@@ -455,6 +605,7 @@ export default function InterViewPage() {
           eventSource.close();
           eventSourceRef.current = null;
           setAnalyzing(false);
+          setShowScrollHelper(false);
           return;
         }
         
@@ -462,6 +613,7 @@ export default function InterViewPage() {
         eventSource.close();
         eventSourceRef.current = null;
         setAnalyzing(false);
+        setShowScrollHelper(false);
         setAnalysisError(true);
         message.error("分析过程中出现错误，请重试");
       };
@@ -472,6 +624,7 @@ export default function InterViewPage() {
         eventSource.close();
         eventSourceRef.current = null;
         setAnalyzing(false);
+        setShowScrollHelper(false);
       });
       
       // 5秒后，如果没有收到任何数据，显示提示
@@ -820,7 +973,7 @@ export default function InterViewPage() {
                 </div>
               ) : analysisResult ? (
                 <div className="markdown-result-container">
-                  <div className="markdown-result">
+                  <div className="markdown-result" ref={markdownRef} onScroll={handleMarkdownScroll}>
                     <ReactMarkdown>{analysisResult}</ReactMarkdown>
                     {analyzing && (
                       <div className="analyzing-indicator">
@@ -828,7 +981,9 @@ export default function InterViewPage() {
                       </div>
                     )}
                   </div>
-                  <div className="scroll-helper">向下滚动查看更多内容</div>
+                  {showScrollHelper && (
+                    <div className="scroll-helper">向下滚动查看更多内容</div>
+                  )}
                 </div>
               ) : analysisError ? (
                 <div className="analysis-error">
@@ -870,6 +1025,39 @@ export default function InterViewPage() {
         className="interview-modal"
       >
         <div className="modal-content">
+          {/* 题目生成覆盖层 */}
+          {modalQuestionGenerating && (
+            <div className="modal-generating-overlay">
+              <div className="generating-content">
+                <Spin size="large" />
+                <div className="generating-text">
+                  <div className="generating-title">AI正在为您生成面试题目</div>
+                  <div className="generating-subtitle">请耐心等待，题目将根据您的简历内容个性化定制</div>
+                  <Progress 
+                    percent={Math.floor(generationProgress)} 
+                    status={generationProgress >= 100 ? "success" : "active"}
+                    strokeColor={{
+                      '0%': '#108ee9',
+                      '100%': '#87d068',
+                    }}
+                    style={{ marginTop: '16px' }}
+                  />
+                  <div className="progress-info">
+                    <Text type="secondary">
+                      {Math.floor(generationProgress)}% 已完成
+                    </Text>
+                  </div>
+                  <Button 
+                    type="link" 
+                    onClick={handleModalCancelGeneration}
+                    style={{ marginTop: '16px' }}
+                  >
+                    取消生成
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           {/* 进度指示器 */}
           <div className="modal-progress">
             <div className={`progress-step ${currentStep >= 0 ? 'active' : ''}`}>
@@ -998,16 +1186,29 @@ export default function InterViewPage() {
 
           <div className="modal-footer">
             <div className="footer-actions">
-              <Button onClick={handleCancel}>取消</Button>
-              <Link href="/interview/start">
-                <Button type="primary" size="large" className="modal-button">
-                  <VideoCameraOutlined /> 开始面试
-                </Button>
-              </Link>
+              <Button 
+                onClick={handleCancel}
+                disabled={modalQuestionGenerating}
+              >
+                取消
+              </Button>
+              <Button 
+                type="primary" 
+                size="large" 
+                className="modal-button"
+                onClick={handleModalStartInterview}
+                loading={modalQuestionGenerating}
+                disabled={modalQuestionGenerating}
+              >
+                <VideoCameraOutlined /> 
+                {modalQuestionGenerating ? "题目生成中..." : "开始面试"}
+              </Button>
             </div>
           </div>
         </div>
       </Modal>
+      
+      {/* 全屏题目生成加载覆盖层（已移除） */}
     </div>
   );
 }

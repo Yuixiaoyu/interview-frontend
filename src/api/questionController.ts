@@ -7,7 +7,7 @@ export async function addQuestion(
   body: API.QuestionAddRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseLong>(`${/api/}/question/add`, {
+  return request<API.BaseResponseLong>("/question/add", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -22,7 +22,7 @@ export async function deleteQuestion(
   body: API.DeleteRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(`${/api/}/question/delete`, {
+  return request<API.BaseResponseBoolean>("/question/delete", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -37,7 +37,7 @@ export async function batchDeleteQuestions(
   body: API.QuestionBatchRemoveRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(`${/api/}/question/delete/batch`, {
+  return request<API.BaseResponseBoolean>("/question/delete/batch", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -52,7 +52,7 @@ export async function editQuestion(
   body: API.QuestionEditRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(`${/api/}/question/edit`, {
+  return request<API.BaseResponseBoolean>("/question/edit", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -68,7 +68,7 @@ export async function getQuestionVoById(
   params: API.getQuestionVOByIdParams,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseQuestionVO>(`${/api/}/question/get/vo`, {
+  return request<API.BaseResponseQuestionVO>("/question/get/vo", {
     method: "GET",
     params: {
       ...params,
@@ -82,7 +82,7 @@ export async function listQuestionByPage(
   body: API.QuestionQueryRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePageQuestion>(`${/api/}/question/list/page`, {
+  return request<API.BaseResponsePageQuestion>("/question/list/page", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -97,17 +97,14 @@ export async function listQuestionVoByPage(
   body: API.QuestionQueryRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePageQuestionVO>(
-    `${/api/}/question/list/page/vo`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: body,
-      ...(options || {}),
-    }
-  );
+  return request<API.BaseResponsePageQuestionVO>("/question/list/page/vo", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
 }
 
 /** 此处后端没有提供注释 POST /question/my/list/page/vo */
@@ -115,17 +112,14 @@ export async function listMyQuestionVoByPage(
   body: API.QuestionQueryRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePageQuestionVO>(
-    `${/api/}/question/my/list/page/vo`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: body,
-      ...(options || {}),
-    }
-  );
+  return request<API.BaseResponsePageQuestionVO>("/question/my/list/page/vo", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
 }
 
 /** 此处后端没有提供注释 POST /question/search/page/vo */
@@ -133,17 +127,14 @@ export async function searchQuestionVoByPage(
   body: API.QuestionQueryRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePageQuestionVO>(
-    `${/api/}/question/search/page/vo`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: body,
-      ...(options || {}),
-    }
-  );
+  return request<API.BaseResponsePageQuestionVO>("/question/search/page/vo", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
 }
 
 /** 此处后端没有提供注释 POST /question/update */
@@ -151,7 +142,7 @@ export async function updateQuestion(
   body: API.QuestionUpdateRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(`${/api/}/question/update`, {
+  return request<API.BaseResponseBoolean>("/question/update", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

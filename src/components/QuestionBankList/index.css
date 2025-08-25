@@ -1,4 +1,121 @@
-.question-bank-list{
+/* 题库列表容器 */
+.question-bank-list {
+  width: 100%;
+}
 
+/* 统一题库卡片的高度和样式 */
+.question-bank-list .ant-card {
+  height: 120px;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.question-bank-list .ant-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.15);
+  border-color: #7C3AED;
+}
+
+/* 卡片内容区域 */
+.question-bank-list .ant-card-body {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* 题库头像样式 */
+.question-bank-list .ant-card-meta-avatar {
+  margin-right: 16px;
+}
+
+.question-bank-list .ant-card-meta-avatar .ant-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid #f0f0f0;
+}
+
+/* 题库标题和描述 */
+.question-bank-list .ant-card-meta-detail {
+  overflow: hidden;
+  flex: 1;
+}
+
+.question-bank-list .ant-card-meta-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.question-bank-list .ant-card-meta-description {
+  color: #8c8c8c;
+  font-size: 14px;
+  line-height: 1.4;
+  height: 32px; /* 固定描述区域高度，约等于2行文字 */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 链接样式重置 */
+.question-bank-list a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+}
+
+.question-bank-list a:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+  .question-bank-list .ant-card {
+    height: 110px;
+  }
+  
+  .question-bank-list .ant-card-body {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .question-bank-list .ant-card {
+    height: 100px;
+  }
+  
+  .question-bank-list .ant-card-body {
+    padding: 12px;
+  }
+  
+  .question-bank-list .ant-card-meta-avatar .ant-avatar {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .question-bank-list .ant-card-meta-title {
+    font-size: 14px;
+  }
+  
+  .question-bank-list .ant-card-meta-description {
+    font-size: 12px;
+    height: 28px;
+    line-height: 1.3;
+  }
 }
 

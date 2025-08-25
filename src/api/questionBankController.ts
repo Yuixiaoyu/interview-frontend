@@ -7,7 +7,7 @@ export async function addQuestionBank(
   body: API.QuestionBankAddRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseLong>(`${/api/}/questionBank/add`, {
+  return request<API.BaseResponseLong>("/questionBank/add", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -22,7 +22,7 @@ export async function deleteQuestionBank(
   body: API.DeleteRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(`${/api/}/questionBank/delete`, {
+  return request<API.BaseResponseBoolean>("/questionBank/delete", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -37,7 +37,7 @@ export async function editQuestionBank(
   body: API.QuestionBankEditRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(`${/api/}/questionBank/edit`, {
+  return request<API.BaseResponseBoolean>("/questionBank/edit", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -53,18 +53,15 @@ export async function getQuestionBankVoById(
   params: API.getQuestionBankVOByIdParams,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseQuestionBankVO>(
-    `${/api/}/questionBank/get/vo`,
-    {
-      method: "GET",
-      params: {
-        ...params,
-        questionBankQueryRequest: undefined,
-        ...params["questionBankQueryRequest"],
-      },
-      ...(options || {}),
-    }
-  );
+  return request<API.BaseResponseQuestionBankVO>("/questionBank/get/vo", {
+    method: "GET",
+    params: {
+      ...params,
+      questionBankQueryRequest: undefined,
+      ...params["questionBankQueryRequest"],
+    },
+    ...(options || {}),
+  });
 }
 
 /** 此处后端没有提供注释 POST /questionBank/list/page */
@@ -72,17 +69,14 @@ export async function listQuestionBankByPage(
   body: API.QuestionBankQueryRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePageQuestionBank>(
-    `${/api/}/questionBank/list/page`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: body,
-      ...(options || {}),
-    }
-  );
+  return request<API.BaseResponsePageQuestionBank>("/questionBank/list/page", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
 }
 
 /** 此处后端没有提供注释 POST /questionBank/list/page/vo */
@@ -91,7 +85,7 @@ export async function listQuestionBankVoByPage(
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponsePageQuestionBankVO>(
-    `${/api/}/questionBank/list/page/vo`,
+    "/questionBank/list/page/vo",
     {
       method: "POST",
       headers: {
@@ -109,7 +103,7 @@ export async function listMyQuestionBankVoByPage(
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponsePageQuestionBankVO>(
-    `${/api/}/questionBank/my/list/page/vo`,
+    "/questionBank/my/list/page/vo",
     {
       method: "POST",
       headers: {
@@ -126,7 +120,7 @@ export async function updateQuestionBank(
   body: API.QuestionBankUpdateRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean>(`${/api/}/questionBank/update`, {
+  return request<API.BaseResponseBoolean>("/questionBank/update", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
