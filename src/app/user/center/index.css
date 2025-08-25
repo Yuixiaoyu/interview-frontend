@@ -135,6 +135,195 @@
     text-align: right;
 }
 
+/* 面试记录 */
+.interview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.interview-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 2px dashed #d9d9d9;
+}
+
+.interview-loading {
+    margin-top: 16px;
+}
+
+/* 面试卡片样式 */
+.interview-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+    border: 1px solid #f0f0f0;
+    overflow: hidden;
+}
+
+.interview-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: #1890ff;
+}
+
+.interview-card-cover {
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.interview-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.interview-card:hover .interview-card-overlay {
+    opacity: 1;
+}
+
+.play-icon {
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+}
+
+.interview-card-status {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 3px 6px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+}
+
+.interview-card-title {
+    margin-bottom: 8px;
+}
+
+.interview-card-description {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.interview-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #666;
+}
+
+.info-item span {
+    color: #333;
+}
+
+.interview-card-id {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* 面试详情模态框样式 */
+.interview-detail-modal .ant-modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.interview-detail-content {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.interview-detail-header {
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 16px;
+}
+
+.interview-timeline {
+    padding: 16px 0;
+}
+
+.timeline-item {
+    margin-bottom: 16px;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.timeline-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.timeline-content {
+    padding: 12px 16px;
+    border-radius: 8px;
+    line-height: 1.6;
+    margin-top: 8px;
+}
+
+/* 用户回答样式 */
+.timeline-item[data-type="ANSWER"] .timeline-content {
+    background: #e6f7ff;
+    border-left: 3px solid #1890ff;
+}
+
+/* AI面试官问题样式 */
+.timeline-item[data-type="QUESTION"] .timeline-content {
+    background: #f6ffed;
+    border-left: 3px solid #52c41a;
+}
+
+/* 系统消息样式 */
+.timeline-item[data-type="OTHER"] .timeline-content {
+    background: #fffbe6;
+    border-left: 3px solid #faad14;
+}
+
+.timeline-content .ant-typography {
+    margin-bottom: 0;
+}
+
 /* 响应式调整 */
 @media (max-width: 768px) {
     .profile-header {
@@ -153,5 +342,44 @@
     .user-role-tag {
         margin-left: 0;
         margin-top: 4px;
+    }
+    
+    .interview-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .interview-card-cover {
+        height: 70px;
+    }
+    
+    .interview-card-info {
+        gap: 8px;
+    }
+    
+    .info-item {
+        font-size: 12px;
+    }
+    
+    .interview-empty {
+        padding: 40px 16px;
+    }
+    
+    .interview-detail-modal .ant-modal {
+        margin: 0;
+        max-width: 100vw;
+    }
+    
+    .timeline-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .timeline-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
     }
 }

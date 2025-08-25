@@ -14,13 +14,18 @@ import {
   Statistic,
   Tag,
   Tooltip,
-  Typography
+  Typography,
+  Modal,
+  Spin,
+  Timeline,
+  Empty
 } from "antd";
 import { useSelector } from "react-redux";
 import { RootState } from "@/stores";
 import Paragraph from "antd/es/typography/Paragraph";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CalendarChart from "@/app/user/center/components/CalendarChart";
+import { getInterviewSession, getInterviewDetailBySessionId } from "@/api/aiInterviewController";
 import {
   BookOutlined,
   CheckCircleOutlined,
@@ -29,7 +34,16 @@ import {
   RiseOutlined,
   StarOutlined,
   TrophyOutlined,
-  UserOutlined
+  UserOutlined,
+  VideoCameraOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  EyeOutlined,
+  PlayCircleOutlined,
+  CheckCircleFilled,
+  MessageOutlined,
+  RobotOutlined,
+  UserOutlined as UserIcon
 } from "@ant-design/icons";
 import ACCESS_ENUM from "@/access/accessEnum";
 
@@ -77,6 +91,67 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
 
   // 控制菜单栏的tab高亮
   const [activeTabKey, setActiveTabKey] = useState<string>("record");
+  
+  // 面试会话数据状态
+  const [interviewSessions, setInterviewSessions] = useState<API.AiSession[]>([]);
+  const [loadingInterviews, setLoadingInterviews] = useState(false);
+  
+  // 面试详情模态框状态
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string>('');
+  const [interviewDetails, setInterviewDetails] = useState<API.AiInterviewRecords[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  
+  // 获取面试会话列表
+  const fetchInterviewSessions = async () => {
+    setLoadingInterviews(true);
+    try {
+      const response: any = await getInterviewSession();
+      console.log(response.data)
+      if (response.code === 20000 && response.data) {
+        setInterviewSessions(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch interview sessions:', error);
+    } finally {
+      setLoadingInterviews(false);
+    }
+  };
+  
+  // 获取面试详情
+  const fetchInterviewDetails = async (sessionId: string) => {
+    setLoadingDetails(true);
+    try {
+      const response: any = await getInterviewDetailBySessionId({ sessionId });
+      console.log('面试详情:', response.data);
+      if (response.code === 20000 && response.data) {
+        setInterviewDetails(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch interview details:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+  
+  // 处理查看详情点击事件
+  const handleViewDetails = (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    setDetailModalVisible(true);
+    fetchInterviewDetails(sessionId);
+  };
+  
+  // 关闭详情模态框
+  const handleCloseModal = () => {
+    setDetailModalVisible(false);
+    setCurrentSessionId('');
+    setInterviewDetails([]);
+  };
+  
+  // 页面加载时获取面试会话数据
+  useEffect(() => {
+    fetchInterviewSessions();
+  }, []);
 
   return (
     <div id="userCenterPage" className="max-width-content">
@@ -169,6 +244,11 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
                 icon: <BookOutlined />,
               },
               {
+                key: "interview",
+                label: "面试记录",
+                icon: <VideoCameraOutlined />,
+              },
+              {
                 key: "achievements",
                 label: "个人成就",
                 icon: <TrophyOutlined />,
@@ -204,6 +284,121 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
                     </List.Item>
                   )}
                 />
+              </div>
+            )}
+
+            {/* 面试记录 */}
+            {activeTabKey === "interview" && (
+              <div className="tab-content">
+                <div className="interview-header">
+                  <Title level={4}>
+                    <VideoCameraOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+                    面试会话记录
+                  </Title>
+                  <Text type="secondary">
+                    共 {interviewSessions.length} 次面试记录
+                  </Text>
+                </div>
+                
+                {loadingInterviews ? (
+                  <div className="interview-loading">
+                    <Row gutter={[16, 16]}>
+                      {[1, 2, 3].map(i => (
+                        <Col xs={24} sm={12} lg={8} key={i}>
+                          <Card loading={true} />
+                        </Col>
+                      ))}
+                    </Row>
+                  </div>
+                ) : interviewSessions.length === 0 ? (
+                  <div className="interview-empty">
+                    <VideoCameraOutlined style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }} />
+                    <Text type="secondary">暂无面试记录</Text>
+                    <div style={{ marginTop: 16 }}>
+                      <Button type="primary" onClick={() => {
+                        // 这里可以添加开始面试的逻辑
+                        console.log('开始新面试');
+                      }}>
+                        开始第一次面试
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Row gutter={[16, 16]}>
+                    {interviewSessions.map((session, index) => (
+                      <Col xs={24} sm={12} lg={8} key={session.id || index}>
+                        <Card
+                          className="interview-card"
+                          hoverable
+                          cover={
+                            <div className="interview-card-cover">
+                              <div className="interview-card-overlay">
+                                <PlayCircleOutlined className="play-icon" />
+                              </div>
+                              <div className="interview-card-status">
+                                <CheckCircleFilled style={{ color: '#52c41a' }} />
+                                <span>已完成</span>
+                              </div>
+                            </div>
+                          }
+                          actions={[
+                            <Tooltip title="查看详情" key="view">
+                              <Button 
+                                type="text" 
+                                icon={<EyeOutlined />}
+                                onClick={() => handleViewDetails(session.sessionId || '')}
+                              >
+                                查看详情
+                              </Button>
+                            </Tooltip>
+                          ]}
+                        >
+                          <Card.Meta
+                            title={
+                              <div className="interview-card-title">
+                                <Text strong ellipsis={{ tooltip: true }}>
+                                  {session.name || `面试会话 #${session.id}`}
+                                </Text>
+                              </div>
+                            }
+                            description={
+                              <div className="interview-card-description">
+                                <div className="interview-card-info">
+                                  <div className="info-item">
+                                    <CalendarOutlined style={{ color: '#1890ff' }} />
+                                    <span>
+                                      {session.createTime 
+                                        ? new Date(session.createTime).toLocaleDateString('zh-CN') 
+                                        : '未知日期'
+                                      }
+                                    </span>
+                                  </div>
+                                  <div className="info-item">
+                                    <ClockCircleOutlined style={{ color: '#52c41a' }} />
+                                    <span>
+                                      {session.createTime 
+                                        ? new Date(session.createTime).toLocaleTimeString('zh-CN', { 
+                                            hour: '2-digit', 
+                                            minute: '2-digit' 
+                                          }) 
+                                        : '未知时间'
+                                      }
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="interview-card-id">
+                                  <Tag color="processing" size="small">
+                                    {session.sessionId?.slice(-8) || '无ID'}
+                                  </Tag>
+                                </div>
+                              </div>
+                            }
+                          />
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                )}
               </div>
             )}
 
@@ -278,6 +473,110 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
           </Card>
         </Col>
       </Row>
+      
+      {/* 面试详情模态框 */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <VideoCameraOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+            <span>面试会话详情</span>
+            <Tag color="blue" style={{ marginLeft: 8 }}>
+              ID: {currentSessionId.slice(-8)}
+            </Tag>
+          </div>
+        }
+        open={detailModalVisible}
+        onCancel={handleCloseModal}
+        footer={[
+          <Button key="close" onClick={handleCloseModal}>
+            关闭
+          </Button>
+        ]}
+        width={800}
+        centered
+        className="interview-detail-modal"
+      >
+        <div className="interview-detail-content">
+          {loadingDetails ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <Spin size="large" />
+              <div style={{ marginTop: 16 }}>
+                <Text type="secondary">正在加载面试详情...</Text>
+              </div>
+            </div>
+          ) : interviewDetails.length === 0 ? (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="暂无面试记录"
+            />
+          ) : (
+            <div>
+              <div className="interview-detail-header">
+                <Text type="secondary">
+                  共 {interviewDetails.length} 条对话记录
+                </Text>
+              </div>
+              <Timeline
+                className="interview-timeline"
+                items={interviewDetails.map((record, index) => {
+                  const isUser = record.type === 'ANSWER';
+                  const isAI = record.type === 'QUESTION';
+                  return {
+                    key: record.id || index,
+                    dot: isUser ? (
+                      <Avatar 
+                        size="small" 
+                        icon={<UserIcon />} 
+                        style={{ backgroundColor: '#1890ff' }}
+                      />
+                    ) : isAI ? (
+                      <Avatar 
+                        size="small" 
+                        icon={<RobotOutlined />} 
+                        style={{ backgroundColor: '#52c41a' }}
+                      />
+                    ) : (
+                      <Avatar 
+                        size="small" 
+                        icon={<MessageOutlined />} 
+                        style={{ backgroundColor: '#faad14' }}
+                      />
+                    ),
+                    children: (
+                      <div 
+                        className="timeline-item" 
+                        data-type={record.type || 'OTHER'}
+                      >
+                        <div className="timeline-header">
+                          <Text strong>
+                            {isUser ? '用户回答' : isAI ? 'AI面试官' : '系统消息'}
+                          </Text>
+                          <div className="timeline-meta">
+                            {record.score && (
+                              <Tag color="orange">
+                                得分: {record.score}
+                              </Tag>
+                            )}
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              {record.createTime 
+                                ? new Date(record.createTime).toLocaleString('zh-CN')
+                                : '未知时间'
+                              }
+                            </Text>
+                          </div>
+                        </div>
+                        <div className="timeline-content">
+                          <Text>{record.content || '暂无内容'}</Text>
+                        </div>
+                      </div>
+                    ),
+                  };
+                })}
+              />
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }
