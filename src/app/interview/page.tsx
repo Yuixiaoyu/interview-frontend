@@ -76,6 +76,10 @@ export default function InterViewPage() {
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const router = useRouter();
   
+  // 新增：用于存储轮询间隔ID和取消标志
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isCancelled, setIsCancelled] = useState<boolean>(false);
+  
   // 新增：设备测试相关状态
   const [deviceTestStatus, setDeviceTestStatus] = useState<DeviceTestStatus>({
     camera: 'waiting',
@@ -90,7 +94,7 @@ export default function InterViewPage() {
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   
-  // 确保在组件卸载时关闭SSE连接
+  // 确保在组件卸载时关闭SSE连接和清理轮询
   useEffect(() => {
     return () => {
       if (eventSourceRef.current) {
@@ -98,6 +102,14 @@ export default function InterViewPage() {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
+      
+      // 清理轮询间隔
+      if (pollIntervalRef.current) {
+        console.log("组件卸载，清理轮询间隔");
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+      
       // 清理媒体流
       if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop());
@@ -350,7 +362,7 @@ export default function InterViewPage() {
 
     try {
       // 调用文件上传API
-      const response = await uploadFile({ biz: "interview" }, formData, {
+      const response = await uploadFile({ biz: "resume" }, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -405,6 +417,9 @@ export default function InterViewPage() {
     const maxAttempts = 60; // 最多尝试60次，每次间隔2秒，总共2分钟
     let attempts = 0;
     
+    // 重置取消标志
+    setIsCancelled(false);
+    
     const checkQuestions = async (): Promise<boolean> => {
       try {
         const response = await questionGet();
@@ -424,6 +439,15 @@ export default function InterViewPage() {
     
     return new Promise((resolve, reject) => {
       const pollInterval = setInterval(async () => {
+        // 检查是否已取消
+        if (isCancelled) {
+          clearInterval(pollInterval);
+          pollIntervalRef.current = null;
+          console.log("题目生成已被用户取消");
+          reject(new Error("用户取消了题目生成"));
+          return;
+        }
+        
         attempts++;
         
         // 更新进度（渐进式增长，但不超过90%）
@@ -434,17 +458,17 @@ export default function InterViewPage() {
           const isComplete = await checkQuestions();
           
           if (isComplete) {
-            // 题目生成完成
+            // 题目生成完成，立即跳转
             clearInterval(pollInterval);
+            pollIntervalRef.current = null;
             setGenerationProgress(100);
             
-            // 显示完成状态1秒后跳转
-            setTimeout(() => {
+            if (!isCancelled) { // 确保未被取消
               setModalQuestionGenerating(false);
               message.success("题目生成完成，正在跳转...");
               router.push("/interview/start");
               resolve();
-            }, 1000);
+            }
             
             return;
           }
@@ -452,6 +476,7 @@ export default function InterViewPage() {
           if (attempts >= maxAttempts) {
             // 超时，停止轮询
             clearInterval(pollInterval);
+            pollIntervalRef.current = null;
             setModalQuestionGenerating(false);
             reject(new Error("题目生成超时，请稍后重试"));
             return;
@@ -459,10 +484,14 @@ export default function InterViewPage() {
           
         } catch (error) {
           clearInterval(pollInterval);
+          pollIntervalRef.current = null;
           setModalQuestionGenerating(false);
           reject(error);
         }
       }, 2000); // 每2秒检查一次
+      
+      // 存储间隔ID以便后续清除
+      pollIntervalRef.current = pollInterval;
     });
   };
   
@@ -499,6 +528,17 @@ export default function InterViewPage() {
   
   // 取消模态框中的题目生成
   const handleModalCancelGeneration = () => {
+    // 设置取消标志
+    setIsCancelled(true);
+    
+    // 清除轮询间隔
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+      console.log("已清除轮询间隔，停止向后端发送请求");
+    }
+    
+    // 重置状态
     setModalQuestionGenerating(false);
     setGenerationProgress(0);
     message.info("已取消题目生成");

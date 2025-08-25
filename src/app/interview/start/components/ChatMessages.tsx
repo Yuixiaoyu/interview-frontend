@@ -19,16 +19,19 @@ export default function ChatMessages({ messages }: { messages: ChatMessage[] }) 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log("💬 ChatMessages组件收到消息更新:", messages.length, "条消息");
+    console.log("💬 消息详情:", messages);
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const grouped = useMemo(() => {
     const map: Record<string, ChatMessage[]> = {};
-    messages.forEach((m) => {
+    messages.forEach((m, index) => {
       const key = formatTime(m.timestamp);
       if (!map[key]) map[key] = [];
-      map[key].push(m);
+      map[key].push({ ...m, originalIndex: index }); // 添加原始索引避免key冲突
     });
+    console.log("💬 消息分组结果:", map);
     return map;
   }, [messages]);
 
@@ -39,7 +42,7 @@ export default function ChatMessages({ messages }: { messages: ChatMessage[] }) 
           <div className="message-time">{timeKey}</div>
           {msgs.map((msg, index) => (
             <div
-              key={`${timeKey}-${index}`}
+              key={`${timeKey}-${index}-${(msg as any).originalIndex || index}-${msg.timestamp.getTime()}`}
               className={`message-item ${msg.isAI ? "ai-message" : "user-message"}`}
             >
               <div className="message-content-wrapper">
