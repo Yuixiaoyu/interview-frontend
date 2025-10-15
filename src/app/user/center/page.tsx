@@ -312,14 +312,56 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
                   </div>
                 ) : interviewSessions.length === 0 ? (
                   <div className="interview-empty">
-                    <VideoCameraOutlined style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }} />
-                    <Text type="secondary">暂无面试记录</Text>
-                    <div style={{ marginTop: 16 }}>
-                      <Button type="primary" onClick={() => {
-                        // 这里可以添加开始面试的逻辑
-                        console.log('开始新面试');
-                      }}>
-                        开始第一次面试
+                    <div style={{ 
+                      background: 'linear-gradient(135deg, #e6f7ff, #f6ffed)',
+                      borderRadius: '50%',
+                      width: 100,
+                      height: 100,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 24
+                    }}>
+                      <VideoCameraOutlined style={{ fontSize: 40, color: '#1890ff' }} />
+                    </div>
+                    <Title level={4} type="secondary" style={{ marginBottom: 8 }}>
+                      还没有面试记录
+                    </Title>
+                    <Text type="secondary" style={{ fontSize: 16, marginBottom: 24, display: 'block' }}>
+                      开始您的第一次AI面试，获得专业的技能评估
+                    </Text>
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+                      <Button 
+                        type="primary" 
+                        size="large"
+                        icon={<PlayCircleOutlined />}
+                        style={{
+                          borderRadius: '8px',
+                          height: '48px',
+                          paddingLeft: '24px',
+                          paddingRight: '24px',
+                          fontSize: '16px',
+                          fontWeight: 500
+                        }}
+                        onClick={() => {
+                          // 这里可以添加开始面试的逻辑
+                          console.log('开始新面试');
+                        }}
+                      >
+                        开始面试
+                      </Button>
+                      <Button 
+                        size="large"
+                        icon={<BookOutlined />}
+                        style={{
+                          borderRadius: '8px',
+                          height: '48px',
+                          paddingLeft: '24px',
+                          paddingRight: '24px',
+                          fontSize: '16px'
+                        }}
+                      >
+                        了解更多
                       </Button>
                     </div>
                   </div>
@@ -336,7 +378,7 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
                                 <PlayCircleOutlined className="play-icon" />
                               </div>
                               <div className="interview-card-status">
-                                <CheckCircleFilled style={{ color: '#52c41a' }} />
+                                <CheckCircleFilled />
                                 <span>已完成</span>
                               </div>
                             </div>
@@ -347,6 +389,7 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
                                 type="text" 
                                 icon={<EyeOutlined />}
                                 onClick={() => handleViewDetails(session.sessionId || '')}
+                                style={{ color: '#1890ff', fontWeight: 500 }}
                               >
                                 查看详情
                               </Button>
@@ -356,7 +399,7 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
                           <Card.Meta
                             title={
                               <div className="interview-card-title">
-                                <Text strong ellipsis={{ tooltip: true }}>
+                                <Text strong ellipsis={{ tooltip: true }} style={{ fontSize: '16px' }}>
                                   {session.name || `面试会话 #${session.id}`}
                                 </Text>
                               </div>
@@ -385,8 +428,22 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
                                       }
                                     </span>
                                   </div>
+                                  <div className="info-item">
+                                    <MessageOutlined style={{ color: '#722ed1' }} />
+                                    <span>预计 5-8 题</span>
+                                  </div>
                                 </div>
                                 <div className="interview-card-id">
+                                  <div className="interview-stats">
+                                    <div className="stat-item">
+                                      <TrophyOutlined style={{ color: '#faad14' }} />
+                                      <span>优秀</span>
+                                    </div>
+                                    <div className="stat-item">
+                                      <FireOutlined style={{ color: '#ff4d4f' }} />
+                                      <span>25分钟</span>
+                                    </div>
+                                  </div>
                                   <Tag color="processing" size="small">
                                     {session.sessionId?.slice(-8) || '无ID'}
                                   </Tag>
@@ -510,70 +567,150 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
               description="暂无面试记录"
             />
           ) : (
-            <div>
-              <div className="interview-detail-header">
-                <Text type="secondary">
-                  共 {interviewDetails.length} 条对话记录
-                </Text>
-              </div>
-              <Timeline
-                className="interview-timeline"
-                items={interviewDetails.map((record, index) => {
-                  const isUser = record.type === 'ANSWER';
-                  const isAI = record.type === 'QUESTION';
-                  return {
-                    key: record.id || index,
-                    dot: isUser ? (
-                      <Avatar 
-                        size="small" 
-                        icon={<UserIcon />} 
-                        style={{ backgroundColor: '#1890ff' }}
+                          <div>
+                <div className="interview-detail-header">
+                  <Row gutter={[16, 16]} align="middle" justify="center">
+                    <Col>
+                      <Statistic 
+                        title="对话轮次" 
+                        value={interviewDetails.length} 
+                        prefix={<MessageOutlined />}
+                        valueStyle={{ color: '#1890ff', fontSize: '20px' }}
                       />
-                    ) : isAI ? (
-                      <Avatar 
-                        size="small" 
-                        icon={<RobotOutlined />} 
-                        style={{ backgroundColor: '#52c41a' }}
+                    </Col>
+                    <Col>
+                      <Statistic 
+                        title="用户回答" 
+                        value={interviewDetails.filter(item => item.type === 'ANSWER').length} 
+                        prefix={<UserIcon />}
+                        valueStyle={{ color: '#52c41a', fontSize: '20px' }}
                       />
-                    ) : (
-                      <Avatar 
-                        size="small" 
-                        icon={<MessageOutlined />} 
-                        style={{ backgroundColor: '#faad14' }}
+                    </Col>
+                    <Col>
+                      <Statistic 
+                        title="AI提问" 
+                        value={interviewDetails.filter(item => item.type === 'QUESTION').length} 
+                        prefix={<RobotOutlined />}
+                        valueStyle={{ color: '#722ed1', fontSize: '20px' }}
                       />
-                    ),
-                    children: (
-                      <div 
-                        className="timeline-item" 
-                        data-type={record.type || 'OTHER'}
-                      >
-                        <div className="timeline-header">
-                          <Text strong>
-                            {isUser ? '用户回答' : isAI ? 'AI面试官' : '系统消息'}
-                          </Text>
-                          <div className="timeline-meta">
-                            {record.score && (
-                              <Tag color="orange">
-                                得分: {record.score}
-                              </Tag>
-                            )}
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                              {record.createTime 
-                                ? new Date(record.createTime).toLocaleString('zh-CN')
-                                : '未知时间'
-                              }
-                            </Text>
+                    </Col>
+                    <Col>
+                      <Statistic 
+                        title="平均得分" 
+                        value={
+                          interviewDetails.filter(item => item.score).length > 0 
+                            ? Math.round(
+                                interviewDetails
+                                  .filter(item => item.score)
+                                  .reduce((sum, item) => sum + (item.score || 0), 0) / 
+                                interviewDetails.filter(item => item.score).length
+                              )
+                            : 0
+                        } 
+                        suffix="/100"
+                        prefix={<TrophyOutlined />}
+                        valueStyle={{ color: '#faad14', fontSize: '20px' }}
+                      />
+                    </Col>
+                  </Row>
+                </div>
+                <Timeline
+                  className="interview-timeline"
+                  items={interviewDetails.map((record, index) => {
+                    const isUser = record.type === 'ANSWER';
+                    const isAI = record.type === 'QUESTION';
+                    return {
+                      key: record.id || index,
+                      dot: isUser ? (
+                        <Avatar 
+                          size="default" 
+                          icon={<UserIcon />} 
+                          style={{ 
+                            backgroundColor: '#1890ff',
+                            border: '2px solid #fff',
+                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)'
+                          }}
+                        />
+                      ) : isAI ? (
+                        <Avatar 
+                          size="default" 
+                          icon={<RobotOutlined />} 
+                          style={{ 
+                            backgroundColor: '#52c41a',
+                            border: '2px solid #fff',
+                            boxShadow: '0 2px 8px rgba(82, 196, 26, 0.3)'
+                          }}
+                        />
+                      ) : (
+                        <Avatar 
+                          size="default" 
+                          icon={<MessageOutlined />} 
+                          style={{ 
+                            backgroundColor: '#faad14',
+                            border: '2px solid #fff',
+                            boxShadow: '0 2px 8px rgba(250, 173, 20, 0.3)'
+                          }}
+                        />
+                      ),
+                      children: (
+                        <div 
+                          className="timeline-item" 
+                          data-type={record.type || 'OTHER'}
+                        >
+                          <div className="timeline-header">
+                            <div>
+                              <Text strong style={{ fontSize: '15px' }}>
+                                {isUser ? '🙋‍♂️ 用户回答' : isAI ? '🤖 AI面试官' : '💬 系统消息'}
+                              </Text>
+                              <Text type="secondary" style={{ fontSize: '13px', marginLeft: 8 }}>
+                                第 {index + 1} 轮
+                              </Text>
+                            </div>
+                            <div className="timeline-meta">
+                              {record.score && (
+                                <Tag 
+                                  color={record.score >= 80 ? 'success' : record.score >= 60 ? 'warning' : 'error'}
+                                  style={{ borderRadius: '12px', fontWeight: 500 }}
+                                >
+                                  <TrophyOutlined style={{ marginRight: 4 }} />
+                                  {record.score} 分
+                                </Tag>
+                              )}
+                              <Text type="secondary" style={{ fontSize: '12px' }}>
+                                {record.createTime 
+                                  ? new Date(record.createTime).toLocaleString('zh-CN', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })
+                                  : '未知时间'
+                                }
+                              </Text>
+                            </div>
+                          </div>
+                          <div className="timeline-content">
+                            <Paragraph 
+                              style={{ 
+                                marginBottom: 0, 
+                                fontSize: '14px',
+                                whiteSpace: 'pre-wrap'
+                              }}
+                              ellipsis={{ 
+                                rows: 4, 
+                                expandable: true, 
+                                symbol: '展开更多'
+                              }}
+                            >
+                              {record.content || '暂无内容'}
+                            </Paragraph>
                           </div>
                         </div>
-                        <div className="timeline-content">
-                          <Text>{record.content || '暂无内容'}</Text>
-                        </div>
-                      </div>
-                    ),
-                  };
-                })}
-              />
-            </div>
+                      ),
+                    };
+                  })}
+                />
+              </div>
           )}
         </div>
       </Modal>

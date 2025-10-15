@@ -18,12 +18,20 @@ export default async function QuestionsPage({searchParams}) {
   let total = 0;
 
   try{
-    const res = await searchQuestionVoByPage({
-      searchText,
-      pageSize: 16,
-      sortField: "_score",
-      sortOrder: "descend"
-    })
+    // 如果有搜索参数，使用搜索API；否则使用列表API
+    const res = searchText
+      ? await searchQuestionVoByPage({
+          searchText,
+          pageSize: 16,
+          sortField: "_score",
+          sortOrder: "descend"
+        })
+      : await listQuestionVoByPage({
+          pageSize: 16,
+          sortField: "createTime",
+          sortOrder: "descend"
+        });
+
     questionList = res.data.records ?? [];
     total  = res.data.total ?? 0;
   }catch (e:any) {

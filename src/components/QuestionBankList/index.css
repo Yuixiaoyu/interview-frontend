@@ -5,20 +5,21 @@
 
 /* 统一题库卡片的高度和样式 */
 .question-bank-list .ant-card {
-  height: 120px;
+  height: 140px;
   border-radius: 12px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #e1e8f0;
   transition: all 0.3s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .question-bank-list .ant-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.15);
-  border-color: #7C3AED;
+  box-shadow: 0 12px 28px rgba(74, 105, 189, 0.18);
+  border-color: #4a69bd;
 }
 
 /* 卡片内容区域 */
@@ -36,10 +37,11 @@
 }
 
 .question-bank-list .ant-card-meta-avatar .ant-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 2px solid #f0f0f0;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  border: 2px solid #e1e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* 题库标题和描述 */
@@ -86,32 +88,37 @@
 /* 响应式调整 */
 @media (max-width: 1200px) {
   .question-bank-list .ant-card {
-    height: 110px;
+    height: 130px;
   }
-  
+
   .question-bank-list .ant-card-body {
     padding: 14px;
+  }
+
+  .question-bank-list .ant-card-meta-avatar .ant-avatar {
+    width: 56px;
+    height: 56px;
   }
 }
 
 @media (max-width: 768px) {
   .question-bank-list .ant-card {
-    height: 100px;
+    height: 120px;
   }
-  
+
   .question-bank-list .ant-card-body {
     padding: 12px;
   }
-  
+
   .question-bank-list .ant-card-meta-avatar .ant-avatar {
-    width: 36px;
-    height: 36px;
+    width: 48px;
+    height: 48px;
   }
-  
+
   .question-bank-list .ant-card-meta-title {
     font-size: 14px;
   }
-  
+
   .question-bank-list .ant-card-meta-description {
     font-size: 12px;
     height: 28px;
