@@ -15,7 +15,6 @@ import {
   Popconfirm,
   Space,
   Table,
-  Tooltip,
   Typography,
 } from "antd";
 import React, { useRef, useState } from "react";
@@ -57,6 +56,19 @@ const QuestionAdminPage: React.FC = () => {
   const actionRef = useRef<ActionType>();
   // 当前题目点击的数据
   const [currentRow, setCurrentRow] = useState<API.Question>();
+
+  const renderTwoLineEllipsis = (text?: string) => {
+    const displayText = text?.trim() || "-";
+
+    return (
+      <Typography.Paragraph
+        ellipsis={{ rows: 2, tooltip: displayText }}
+        style={{ marginBottom: 0 }}
+      >
+        {displayText}
+      </Typography.Paragraph>
+    );
+  };
 
   /**
    * 删除节点
@@ -122,6 +134,8 @@ const QuestionAdminPage: React.FC = () => {
       title: "标题",
       dataIndex: "title",
       valueType: "text",
+      width: 280,
+      render: (_, record) => renderTwoLineEllipsis(record.title),
     },
     {
       title: "内容",
@@ -129,6 +143,7 @@ const QuestionAdminPage: React.FC = () => {
       valueType: "text",
       hideInSearch: true,
       width: 240,
+      render: (_, record) => renderTwoLineEllipsis(record.content),
       renderFormItem: (
         _,
         { type, defaultRender, formItemProps, fieldProps, ...rest },
