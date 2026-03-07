@@ -41,9 +41,9 @@ const UserLoginPage: React.FC = () => {
     <div id="userLoginPage">
       <LoginForm
         form={form}
-        logo={<Image src="/assets/logo.png" height={44} width={44} alt="给我一个offer" />}
-        title="智面星图AI评测平台 用户登陆"
-        subTitle="给我一个Offer团队开发~ "
+        logo={<Image src="/assets/logo.png" height={44} width={44} alt="面面聚到团队" />}
+        title="数智面聘 用户登陆"
+        subTitle="面面聚到团队开发~ "
         onFinish={doSubmit}
       >
         <ProFormText

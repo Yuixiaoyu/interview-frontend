@@ -7,7 +7,7 @@ import TagList from "@/components/TagList";
 interface Props {
   questionBankId?: number;
   questionList?: API.QuestionVO[];
-  cardTitle: string;
+  cardTitle?: string;
 }
 
 /**

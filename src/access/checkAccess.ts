@@ -28,6 +28,13 @@ const checkAccess = (loginUser: API.LoginUserVO, needAccess = ACCESS_ENUM.NOT_LO
       return false;
     }
   }
+  //如果需要企业权限才能访问（管理员也可以访问）
+  if (needAccess === ACCESS_ENUM.ENTERPRISE) {
+    //如果用户没有企业权限
+    if (loginUserAccess !== ACCESS_ENUM.ENTERPRISE && loginUserAccess !== ACCESS_ENUM.ADMIN) {
+      return false;
+    }
+  }
   return true;
 }
 

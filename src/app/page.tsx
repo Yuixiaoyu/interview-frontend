@@ -184,13 +184,6 @@ export default function HomePage() {
       </motion.section>
 
       {/* Features Section */}
-      <motion.section
-        ref={featuresRef}
-        initial="hidden"
-        animate={featuresInView ? "visible" : "hidden"}
-        variants={staggerContainer}
-        className="features-section"
-      >
         <div className="section-container">
           <motion.div variants={scaleIn} className="section-header">
             <span className="section-badge">平台特色</span>
@@ -218,7 +211,6 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </motion.section>
 
       {/* Statistics & Benefits Section */}
       <motion.section

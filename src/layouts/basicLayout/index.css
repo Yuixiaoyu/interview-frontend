@@ -1,6 +1,7 @@
-.ant-pro-layout .ant-pro-layout-content{
-  padding-bottom: 32px !important;
+.ant-pro-layout .ant-pro-layout-content {
+  padding: 0 !important;
 }
+
 .ant-pro-layout-top{
   height: 100%;
 }

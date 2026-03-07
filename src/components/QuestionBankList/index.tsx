@@ -5,6 +5,7 @@ import Link from "next/link";
 
 interface Props {
   questionBankList?: API.QuestionBankVO[];
+  descriptionRows?: number;
 }
 
 /**
@@ -13,7 +14,7 @@ interface Props {
  * @constructor
  */
 const QuestionBankList = (props: Props) => {
-  const { questionBankList = [] } = props;
+  const { questionBankList = [], descriptionRows = 1 } = props;
 
   const questionBankView = (questionBank: API.QuestionBankVO) => {
     return (
@@ -25,7 +26,7 @@ const QuestionBankList = (props: Props) => {
             description={
               <Typography.Paragraph
                 type="secondary"
-                ellipsis={{ rows: 1 }}
+                ellipsis={{ rows: descriptionRows }}
                 style={{ marginBottom: 0 }}
               >
                 {questionBank.description}

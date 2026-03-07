@@ -1,565 +1,887 @@
 "use client";
-import "./index.css";
+
 import Title from "antd/es/typography/Title";
+import Paragraph from "antd/es/typography/Paragraph";
 import {
   Avatar,
-  Badge,
   Button,
   Card,
   Col,
-  Divider,
+  Empty,
   List,
+  Modal,
   Progress,
   Row,
+  Spin,
   Statistic,
   Tag,
-  Tooltip,
-  Typography,
-  Modal,
-  Spin,
   Timeline,
-  Empty
+  Typography,
 } from "antd";
 import { useSelector } from "react-redux";
 import { RootState } from "@/stores";
-import Paragraph from "antd/es/typography/Paragraph";
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CalendarChart from "@/app/user/center/components/CalendarChart";
-import { getInterviewSession, getInterviewDetailBySessionId } from "@/api/aiInterviewController";
+import {
+  getInterviewDetailBySessionId,
+  getInterviewSession,
+} from "@/api/aiInterviewController";
 import {
   BookOutlined,
-  CheckCircleOutlined,
+  CalendarOutlined,
+  CheckCircleFilled,
+  ClockCircleOutlined,
   EditOutlined,
+  EyeOutlined,
   FireOutlined,
+  MessageOutlined,
+  PlayCircleOutlined,
   RiseOutlined,
+  RobotOutlined,
   StarOutlined,
   TrophyOutlined,
   UserOutlined,
+  UserOutlined as UserIcon,
   VideoCameraOutlined,
-  CalendarOutlined,
-  ClockCircleOutlined,
-  EyeOutlined,
-  PlayCircleOutlined,
-  CheckCircleFilled,
-  MessageOutlined,
-  RobotOutlined,
-  UserOutlined as UserIcon
 } from "@ant-design/icons";
 import ACCESS_ENUM from "@/access/accessEnum";
 
 const { Text } = Typography;
 
-interface UserCenterPageProps {
-  searchParams?: Record<string, string>;
-}
+type TabKey = "record" | "interview" | "achievements" | "skills";
 
-/**
- * 用户中心页
- * @returns
- */
-export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
-  /**
-   * 获取登陆用户信息
-   */
-  const loginUser = useSelector((state: RootState) => state.loginUser);
+const ACHIEVEMENT_TARGET = 10;
+const MASTER_TARGET = 100;
 
-  const user = loginUser;
+const tabs: {
+  key: TabKey;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    key: "record",
+    label: "刷题记录",
+    description: "用更清晰的节奏查看刷题活跃度与近期进展。",
+    icon: <BookOutlined />,
+  },
+  {
+    key: "interview",
+    label: "面试记录",
+    description: "快速浏览会话档案，并进入单场面试详情复盘。",
+    icon: <VideoCameraOutlined />,
+  },
+  {
+    key: "achievements",
+    label: "个人成就",
+    description: "把阶段性里程碑做成更有成就感的个人勋章墙。",
+    icon: <TrophyOutlined />,
+  },
+  {
+    key: "skills",
+    label: "技能分析",
+    description: "根据技能强弱分布，聚焦下一阶段的提升方向。",
+    icon: <RiseOutlined />,
+  },
+];
 
-  // 模拟用户统计数据
+const formatDateTime = (
+  value?: string,
+  options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }
+) => {
+  if (!value) {
+    return "暂无时间";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "暂无时间";
+  }
+  return date.toLocaleString("zh-CN", options);
+};
+
+export default function UserCenterPage() {
+  const user = useSelector((state: RootState) => state.loginUser);
+
   const userStats = {
     solved: 78,
     totalQuestions: 150,
     streak: 6,
     ranking: 256,
     achievements: [
-      { name: "初出茅庐", description: "完成第一题", icon: <StarOutlined /> },
-      { name: "坚持不懈", description: "连续刷题7天", icon: <FireOutlined /> },
-      { name: "思维灵活", description: "一次性通过困难题", icon: <TrophyOutlined /> },
+      {
+        name: "初出茅庐",
+        description: "完成第一题",
+        icon: <StarOutlined />,
+        tone: "violet",
+      },
+      {
+        name: "坚持不懈",
+        description: "连续刷题 7 天",
+        icon: <FireOutlined />,
+        tone: "amber",
+      },
+      {
+        name: "思维灵活",
+        description: "一次性通过困难题",
+        icon: <TrophyOutlined />,
+        tone: "mint",
+      },
     ],
     recentActivities: [
-      { title: "完成了「二叉树遍历」", time: "2小时前" },
+      { title: "完成了「二叉树遍历」", time: "2 小时前" },
       { title: "解锁了「动态规划」成就", time: "昨天" },
-      { title: "参加了每周编程挑战赛", time: "3天前" },
+      { title: "参加了每周编程挑战赛", time: "3 天前" },
     ],
     skills: [
       { name: "JavaScript", level: 85 },
       { name: "算法", level: 70 },
       { name: "数据结构", level: 75 },
       { name: "React", level: 80 },
-    ]
+    ],
   };
 
-  // 控制菜单栏的tab高亮
-  const [activeTabKey, setActiveTabKey] = useState<string>("record");
-  
-  // 面试会话数据状态
+  const [activeTabKey, setActiveTabKey] = useState<TabKey>("record");
   const [interviewSessions, setInterviewSessions] = useState<API.AiSession[]>([]);
   const [loadingInterviews, setLoadingInterviews] = useState(false);
-  
-  // 面试详情模态框状态
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [currentSessionId, setCurrentSessionId] = useState<string>('');
+  const [currentSessionId, setCurrentSessionId] = useState("");
   const [interviewDetails, setInterviewDetails] = useState<API.AiInterviewRecords[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
-  
-  // 获取面试会话列表
+
+  const completionRate = Math.round(
+    (userStats.solved / userStats.totalQuestions) * 100
+  );
+  const achievementProgress = Math.round(
+    (userStats.achievements.length / ACHIEVEMENT_TARGET) * 100
+  );
+  const remainingToMaster = Math.max(MASTER_TARGET - userStats.solved, 0);
+
+  const sortedSkills = useMemo(
+    () => [...userStats.skills].sort((left, right) => right.level - left.level),
+    [userStats.skills]
+  );
+  const strongestSkill = sortedSkills[0];
+  const focusSkill = sortedSkills[sortedSkills.length - 1];
+
+  const sortedInterviewSessions = useMemo(() => {
+    return [...interviewSessions].sort((left, right) => {
+      const leftTime = left.createTime ? new Date(left.createTime).getTime() : 0;
+      const rightTime = right.createTime ? new Date(right.createTime).getTime() : 0;
+      return rightTime - leftTime;
+    });
+  }, [interviewSessions]);
+
+  const latestSession = sortedInterviewSessions[0];
+  const interviewSummary = useMemo(() => {
+    const answeredCount = interviewDetails.filter(
+      (item) => item.type === "ANSWER"
+    ).length;
+    const aiQuestionCount = interviewDetails.filter(
+      (item) => item.type === "QUESTION"
+    ).length;
+    const scoredItems = interviewDetails.filter(
+      (item) => typeof item.score === "number"
+    );
+
+    return {
+      answeredCount,
+      aiQuestionCount,
+      averageScore:
+        scoredItems.length > 0
+          ? Math.round(
+              scoredItems.reduce((sum, item) => sum + (item.score || 0), 0) /
+                scoredItems.length
+            )
+          : 0,
+    };
+  }, [interviewDetails]);
+
+  const activeTab = tabs.find((tab) => tab.key === activeTabKey) ?? tabs[0];
+  const roleLabel =
+    user.userRole === ACCESS_ENUM.ADMIN ? "管理员身份" : "成长用户";
+
+  const heroMetrics = [
+    {
+      label: "题目完成率",
+      value: `${completionRate}%`,
+      note: `${userStats.solved} / ${userStats.totalQuestions} 已完成`,
+      icon: <BookOutlined />,
+    },
+    {
+      label: "连续打卡",
+      value: `${userStats.streak} 天`,
+      note: "保持你的学习节奏", 
+      icon: <FireOutlined />,
+    },
+    {
+      label: "当前排名",
+      value: `#${userStats.ranking}`,
+      note: "正在稳步提升中",
+      icon: <RiseOutlined />,
+    },
+    {
+      label: "面试档案",
+      value: `${interviewSessions.length} 场`,
+      note: latestSession
+        ? `最近一次 ${formatDateTime(latestSession.createTime, {
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}`
+        : "先开始第一场模拟面试吧",
+      icon: <VideoCameraOutlined />,
+    },
+  ];
+
+  const focusItems = [
+    {
+      label: "最强技能",
+      value: strongestSkill?.name ?? "待解锁",
+      detail: strongestSkill ? `${strongestSkill.level}% 掌握度` : "继续累积训练数据",
+    },
+    {
+      label: "当前短板",
+      value: focusSkill?.name ?? "待分析",
+      detail: focusSkill ? `建议优先补强至 80%` : "完成更多题目后自动生成",
+    },
+  ];
+
   const fetchInterviewSessions = async () => {
     setLoadingInterviews(true);
     try {
       const response: any = await getInterviewSession();
-      console.log(response.data)
       if (response.code === 20000 && response.data) {
         setInterviewSessions(response.data);
       }
     } catch (error) {
-      console.error('Failed to fetch interview sessions:', error);
+      console.error("Failed to fetch interview sessions:", error);
     } finally {
       setLoadingInterviews(false);
     }
   };
-  
-  // 获取面试详情
+
   const fetchInterviewDetails = async (sessionId: string) => {
     setLoadingDetails(true);
     try {
       const response: any = await getInterviewDetailBySessionId({ sessionId });
-      console.log('面试详情:', response.data);
       if (response.code === 20000 && response.data) {
         setInterviewDetails(response.data);
       }
     } catch (error) {
-      console.error('Failed to fetch interview details:', error);
+      console.error("Failed to fetch interview details:", error);
     } finally {
       setLoadingDetails(false);
     }
   };
-  
-  // 处理查看详情点击事件
+
   const handleViewDetails = (sessionId: string) => {
     setCurrentSessionId(sessionId);
     setDetailModalVisible(true);
     fetchInterviewDetails(sessionId);
   };
-  
-  // 关闭详情模态框
+
   const handleCloseModal = () => {
     setDetailModalVisible(false);
-    setCurrentSessionId('');
+    setCurrentSessionId("");
     setInterviewDetails([]);
   };
-  
-  // 页面加载时获取面试会话数据
+
   useEffect(() => {
     fetchInterviewSessions();
   }, []);
 
-  return (
-    <div id="userCenterPage" className="max-width-content">
-      <Row gutter={[24, 24]}>
-        {/* 用户基本信息卡片 */}
-        <Col xs={24} md={8}>
-          <Card 
-            className="user-profile-card"
-            cover={
-              <div className="profile-header">
-                <div className="profile-avatar">
-                  <Badge 
-                    count={<CheckCircleOutlined style={{ color: '#52c41a' }} />} 
-                    offset={[-8, 8]}
-                  >
-                    <Avatar 
-                      src={user.userAvatar} 
-                      size={100} 
-                      icon={<UserOutlined />}
-                      style={{
-                        border: '4px solid #fff',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-                      }}
-                    />
-                  </Badge>
-                </div>
-              </div>
-            }
-            actions={[
-              <Tooltip title="编辑资料" key="edit">
-                <Button type="text" icon={<EditOutlined />}>编辑资料</Button>
-              </Tooltip>,
-            ]}
-          >
-            <Card.Meta
-              title={
-                <Title level={3} className="user-name">
-                  {user.userName}
-                  <Tag color="blue" className="user-role-tag">
-                    {user.userRole === ACCESS_ENUM.ADMIN ? '管理员' : '用户'}
-                  </Tag>
-                </Title>
-              }
-              description={
-                <div className="user-info">
-                  <Paragraph type="secondary" className="user-bio">
-                    {user.userProfile || "这个用户很懒，还没有填写个人简介..."}
-                  </Paragraph>
-                  <Divider />
-                  <Row gutter={[16, 16]} className="user-stats">
-                    <Col span={8}>
-                      <Statistic 
-                        title="已解题" 
-                        value={userStats.solved} 
-                        suffix={`/${userStats.totalQuestions}`}
-                        valueStyle={{ fontSize: '18px' }}
-                      />
-                    </Col>
-                    <Col span={8}>
-                      <Statistic 
-                        title="连续天数" 
-                        value={userStats.streak}
-                        valueStyle={{ fontSize: '18px' }}
-                        prefix={<FireOutlined style={{ color: '#ff7875' }} />}
-                      />
-                    </Col>
-                    <Col span={8}>
-                      <Statistic 
-                        title="排名" 
-                        value={userStats.ranking}
-                        valueStyle={{ fontSize: '18px' }}
-                        prefix={<RiseOutlined style={{ color: '#52c41a' }} />}
-                      />
-                    </Col>
-                  </Row>
-                </div>
-              }
-            />
-          </Card>
-        </Col>
+  const renderRecordTab = () => {
+    const overviewItems = [
+      {
+        label: "总完成数",
+        value: `${userStats.solved} 题`,
+        note: `目标 ${userStats.totalQuestions} 题`,
+      },
+      {
+        label: "连续冲刺",
+        value: `${userStats.streak} 天`,
+        note: userStats.streak < 7 ? `再坚持 ${7 - userStats.streak} 天解锁新徽章` : "保持状态，继续向前",
+      },
+      {
+        label: "下一目标",
+        value: `${remainingToMaster} 题`,
+        note: "距离“解题高手”更近一步",
+      },
+    ];
 
-        {/* 主要内容区域 */}
-        <Col xs={24} md={16}>
-          <Card
-            className="content-card"
-            tabList={[
-              {
-                key: "record",
-                label: "刷题记录",
-                icon: <BookOutlined />,
-              },
-              {
-                key: "interview",
-                label: "面试记录",
-                icon: <VideoCameraOutlined />,
-              },
-              {
-                key: "achievements",
-                label: "个人成就",
-                icon: <TrophyOutlined />,
-              },
-              {
-                key: "skills",
-                label: "技能分析",
-                icon: <RiseOutlined />,
-              },
-            ]}
-            activeTabKey={activeTabKey}
-            onTabChange={(key) => setActiveTabKey(key)}
-          >
-            {/* 刷题记录 */}
-            {activeTabKey === "record" && (
-              <div className="tab-content">
-                <Title level={4}>刷题日历</Title>
-                <div className="calendar-container">
-                  <CalendarChart />
-                </div>
-                <Divider />
-                <Title level={4}>最近活动</Title>
-                <List
-                  itemLayout="horizontal"
-                  dataSource={userStats.recentActivities}
-                  renderItem={(item) => (
-                    <List.Item>
-                      <List.Item.Meta
-                        avatar={<BookOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
-                        title={item.title}
-                        description={item.time}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </div>
-            )}
+    return (
+      <div className="dashboard-stack">
+        <div className="overview-strip">
+          {overviewItems.map((item) => (
+            <div className="overview-strip__item" key={item.label}>
+              <Text className="overview-strip__label">{item.label}</Text>
+              <Text className="overview-strip__value">{item.value}</Text>
+              <Text className="overview-strip__note">{item.note}</Text>
+            </div>
+          ))}
+        </div>
 
-            {/* 面试记录 */}
-            {activeTabKey === "interview" && (
-              <div className="tab-content">
-                <div className="interview-header">
-                  <Title level={4}>
-                    <VideoCameraOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-                    面试会话记录
+        <Row gutter={[20, 20]}>
+          <Col xs={24} lg={15}>
+            <Card bordered={false} className="dashboard-subcard dashboard-calendar-card">
+              <div className="section-card-header">
+                <div>
+                  <Text className="section-card-eyebrow">Activity Heatmap</Text>
+                  <Title level={4} className="section-card-title">
+                    刷题日历
                   </Title>
-                  <Text type="secondary">
-                    共 {interviewSessions.length} 次面试记录
-                  </Text>
                 </div>
-                
-                {loadingInterviews ? (
-                  <div className="interview-loading">
-                    <Row gutter={[16, 16]}>
-                      {[1, 2, 3].map(i => (
-                        <Col xs={24} sm={12} lg={8} key={i}>
-                          <Card loading={true} />
-                        </Col>
-                      ))}
-                    </Row>
-                  </div>
-                ) : interviewSessions.length === 0 ? (
-                  <div className="interview-empty">
-                    <div style={{ 
-                      background: 'linear-gradient(135deg, #e6f7ff, #f6ffed)',
-                      borderRadius: '50%',
-                      width: 100,
-                      height: 100,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: 24
-                    }}>
-                      <VideoCameraOutlined style={{ fontSize: 40, color: '#1890ff' }} />
+                <Text className="section-card-note">用颜色深浅感受你的训练密度</Text>
+              </div>
+              <div className="calendar-shell">
+                <CalendarChart />
+              </div>
+            </Card>
+          </Col>
+
+          <Col xs={24} lg={9}>
+            <Card bordered={false} className="dashboard-subcard dashboard-activity-card">
+              <div className="section-card-header compact">
+                <div>
+                  <Text className="section-card-eyebrow">Recent Feed</Text>
+                  <Title level={4} className="section-card-title">
+                    最近动态
+                  </Title>
+                </div>
+              </div>
+
+              <List
+                className="activity-list"
+                itemLayout="horizontal"
+                dataSource={userStats.recentActivities}
+                renderItem={(item, index) => (
+                  <List.Item>
+                    <div className="activity-item">
+                      <div className="activity-item__icon">
+                        {index === 1 ? <TrophyOutlined /> : <BookOutlined />}
+                      </div>
+                      <div className="activity-item__content">
+                        <Text className="activity-item__title">{item.title}</Text>
+                        <Text className="activity-item__time">{item.time}</Text>
+                      </div>
                     </div>
-                    <Title level={4} type="secondary" style={{ marginBottom: 8 }}>
-                      还没有面试记录
-                    </Title>
-                    <Text type="secondary" style={{ fontSize: 16, marginBottom: 24, display: 'block' }}>
-                      开始您的第一次AI面试，获得专业的技能评估
-                    </Text>
-                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-                      <Button 
-                        type="primary" 
-                        size="large"
-                        icon={<PlayCircleOutlined />}
-                        style={{
-                          borderRadius: '8px',
-                          height: '48px',
-                          paddingLeft: '24px',
-                          paddingRight: '24px',
-                          fontSize: '16px',
-                          fontWeight: 500
-                        }}
-                        onClick={() => {
-                          // 这里可以添加开始面试的逻辑
-                          console.log('开始新面试');
-                        }}
-                      >
-                        开始面试
-                      </Button>
-                      <Button 
-                        size="large"
-                        icon={<BookOutlined />}
-                        style={{
-                          borderRadius: '8px',
-                          height: '48px',
-                          paddingLeft: '24px',
-                          paddingRight: '24px',
-                          fontSize: '16px'
-                        }}
-                      >
-                        了解更多
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Row gutter={[16, 16]}>
-                    {interviewSessions.map((session, index) => (
-                      <Col xs={24} sm={12} lg={8} key={session.id || index}>
-                        <Card
-                          className="interview-card"
-                          hoverable
-                          cover={
-                            <div className="interview-card-cover">
-                              <div className="interview-card-overlay">
-                                <PlayCircleOutlined className="play-icon" />
-                              </div>
-                              <div className="interview-card-status">
-                                <CheckCircleFilled />
-                                <span>已完成</span>
-                              </div>
-                            </div>
-                          }
-                          actions={[
-                            <Tooltip title="查看详情" key="view">
-                              <Button 
-                                type="text" 
-                                icon={<EyeOutlined />}
-                                onClick={() => handleViewDetails(session.sessionId || '')}
-                                style={{ color: '#1890ff', fontWeight: 500 }}
-                              >
-                                查看详情
-                              </Button>
-                            </Tooltip>
-                          ]}
-                        >
-                          <Card.Meta
-                            title={
-                              <div className="interview-card-title">
-                                <Text strong ellipsis={{ tooltip: true }} style={{ fontSize: '16px' }}>
-                                  {session.name || `面试会话 #${session.id}`}
-                                </Text>
-                              </div>
-                            }
-                            description={
-                              <div className="interview-card-description">
-                                <div className="interview-card-info">
-                                  <div className="info-item">
-                                    <CalendarOutlined style={{ color: '#1890ff' }} />
-                                    <span>
-                                      {session.createTime 
-                                        ? new Date(session.createTime).toLocaleDateString('zh-CN') 
-                                        : '未知日期'
-                                      }
-                                    </span>
-                                  </div>
-                                  <div className="info-item">
-                                    <ClockCircleOutlined style={{ color: '#52c41a' }} />
-                                    <span>
-                                      {session.createTime 
-                                        ? new Date(session.createTime).toLocaleTimeString('zh-CN', { 
-                                            hour: '2-digit', 
-                                            minute: '2-digit' 
-                                          }) 
-                                        : '未知时间'
-                                      }
-                                    </span>
-                                  </div>
-                                  <div className="info-item">
-                                    <MessageOutlined style={{ color: '#722ed1' }} />
-                                    <span>预计 5-8 题</span>
-                                  </div>
-                                </div>
-                                <div className="interview-card-id">
-                                  <div className="interview-stats">
-                                    <div className="stat-item">
-                                      <TrophyOutlined style={{ color: '#faad14' }} />
-                                      <span>优秀</span>
-                                    </div>
-                                    <div className="stat-item">
-                                      <FireOutlined style={{ color: '#ff4d4f' }} />
-                                      <span>25分钟</span>
-                                    </div>
-                                  </div>
-                                  <Tag color="processing" size="small">
-                                    {session.sessionId?.slice(-8) || '无ID'}
-                                  </Tag>
-                                </div>
-                              </div>
-                            }
-                          />
-                        </Card>
-                      </Col>
-                    ))}
-                  </Row>
+                  </List.Item>
                 )}
-              </div>
-            )}
+              />
+            </Card>
+          </Col>
+        </Row>
+      </div>
+    );
+  };
 
-            {/* 成就系统 */}
-            {activeTabKey === "achievements" && (
-              <div className="tab-content">
-                <Row gutter={[24, 24]}>
-                  <Col span={24}>
-                    <Progress 
-                      percent={30} 
-                      strokeColor={{ 
-                        '0%': '#108ee9',
-                        '100%': '#87d068',
-                      }} 
-                      format={() => '解锁成就 3/10'}
-                    />
-                  </Col>
-                  {userStats.achievements.map((achievement, index) => (
-                    <Col xs={24} sm={12} md={8} key={index}>
-                      <Card className="achievement-card">
-                        <div className="achievement-icon">{achievement.icon}</div>
-                        <div className="achievement-content">
-                          <Title level={5}>{achievement.name}</Title>
-                          <Text type="secondary">{achievement.description}</Text>
-                        </div>
-                      </Card>
-                    </Col>
-                  ))}
-                  <Col xs={24} sm={12} md={8}>
-                    <Card className="achievement-card locked">
-                      <div className="achievement-icon locked"><TrophyOutlined /></div>
-                      <div className="achievement-content">
-                        <Title level={5}>解题高手</Title>
-                        <Text type="secondary">解决100道题目</Text>
-                      </div>
-                    </Card>
-                  </Col>
-                </Row>
-              </div>
-            )}
+  const renderInterviewTab = () => {
+    const interviewOverview = [
+      {
+        label: "会话数量",
+        value: `${interviewSessions.length} 场`,
+        note: "所有 AI 模拟面试自动归档",
+      },
+      {
+        label: "最近一次",
+        value: latestSession
+          ? formatDateTime(latestSession.createTime, {
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "暂无记录",
+        note: latestSession ? latestSession.name || "AI 模拟面试" : "开始后会自动同步",
+      },
+      {
+        label: "复盘方式",
+        value: "时间线",
+        note: "点击单场会话即可查看对话详情",
+      },
+    ];
 
-            {/* 技能分析 */}
-            {activeTabKey === "skills" && (
-              <div className="tab-content">
-                <Title level={4}>技能掌握度</Title>
-                <Row gutter={[16, 24]}>
-                  {userStats.skills.map((skill, index) => (
-                    <Col span={24} key={index}>
-                      <div className="skill-item">
-                        <div className="skill-header">
-                          <Text strong>{skill.name}</Text>
-                          <Text>{skill.level}%</Text>
-                        </div>
-                        <Progress percent={skill.level} strokeColor="#1890ff" />
-                      </div>
-                    </Col>
-                  ))}
-                </Row>
-                <Divider />
-                <Title level={4}>学习建议</Title>
-                <Card className="suggestion-card">
-                  <Text>
-                    根据您的技能分布，建议您可以加强对<Tag color="orange">算法</Tag>的学习，
-                    这将有助于提高您的整体编程能力。
-                  </Text>
-                  <div className="suggestion-action">
-                    <Button type="primary">查看学习路线</Button>
+    return (
+      <div className="dashboard-stack">
+        <div className="overview-strip">
+          {interviewOverview.map((item) => (
+            <div className="overview-strip__item" key={item.label}>
+              <Text className="overview-strip__label">{item.label}</Text>
+              <Text className="overview-strip__value">{item.value}</Text>
+              <Text className="overview-strip__note">{item.note}</Text>
+            </div>
+          ))}
+        </div>
+
+        {loadingInterviews ? (
+          <Row gutter={[20, 20]}>
+            {[1, 2, 3].map((item) => (
+              <Col xs={24} md={12} key={item}>
+                <Card bordered={false} className="interview-session-card" loading />
+              </Col>
+            ))}
+          </Row>
+        ) : sortedInterviewSessions.length === 0 ? (
+          <div className="interview-empty-state">
+            <VideoCameraOutlined className="interview-empty-state__icon" />
+            <Title level={4}>还没有面试记录</Title>
+            <Paragraph>
+              开始第一场 AI 模拟面试后，这里会自动形成你的专属复盘档案。
+            </Paragraph>
+          </div>
+        ) : (
+          <Row gutter={[20, 20]}>
+            {sortedInterviewSessions.map((session, index) => (
+              <Col xs={24} md={12} key={session.sessionId || session.id || index}>
+                <Card bordered={false} className="interview-session-card">
+                  <div className="interview-session-card__badge">
+                    <Text>Session {String(index + 1).padStart(2, "0")}</Text>
+                  </div>
+
+                  <div className="interview-session-card__header">
+                    <div>
+                      <Title level={4} className="interview-session-card__title">
+                        {session.name || "AI 模拟面试"}
+                      </Title>
+                      <Text className="interview-session-card__subtitle">
+                        会话 ID：{session.sessionId?.slice(-8) || "暂无编号"}
+                      </Text>
+                    </div>
+                    <PlayCircleOutlined className="interview-session-card__play" />
+                  </div>
+
+                  <div className="session-chip-row">
+                    <span className="session-chip">
+                      <CalendarOutlined />
+                      {formatDateTime(session.createTime, {
+                        month: "2-digit",
+                        day: "2-digit",
+                      })}
+                    </span>
+                    <span className="session-chip">
+                      <ClockCircleOutlined />
+                      已归档
+                    </span>
+                    <span className="session-chip session-chip--accent">
+                      <MessageOutlined />
+                      可复盘
+                    </span>
+                  </div>
+
+                  <Paragraph className="interview-session-card__description">
+                    回顾这场面试中的提问节奏、回答表现和得分分布，快速找到下一次提升方向。
+                  </Paragraph>
+
+                  <div className="interview-session-card__footer">
+                    <Text className="interview-session-card__time">
+                      {formatDateTime(session.createTime)}
+                    </Text>
+                    <Button
+                      type="primary"
+                      icon={<EyeOutlined />}
+                      className="center-primary-button small"
+                      onClick={() => handleViewDetails(session.sessionId || "")}
+                    >
+                      查看详情
+                    </Button>
                   </div>
                 </Card>
+              </Col>
+            ))}
+          </Row>
+        )}
+      </div>
+    );
+  };
+
+  const renderAchievementsTab = () => {
+    return (
+      <div className="dashboard-stack">
+        <Card bordered={false} className="dashboard-subcard achievement-progress-card">
+          <div className="section-card-header compact">
+            <div>
+              <Text className="section-card-eyebrow">Achievement Track</Text>
+              <Title level={4} className="section-card-title">
+                勋章解锁进度
+              </Title>
+            </div>
+            <Text className="section-card-note">
+              已解锁 {userStats.achievements.length} / {ACHIEVEMENT_TARGET}
+            </Text>
+          </div>
+          <Progress
+            percent={achievementProgress}
+            strokeColor={{ "0%": "#7C3AED", "100%": "#A78BFA" }}
+            trailColor="rgba(124, 58, 237, 0.08)"
+            format={() => `${userStats.achievements.length} / ${ACHIEVEMENT_TARGET}`}
+          />
+          <div className="achievement-progress-card__footer">
+            <Text>再完成 {remainingToMaster} 题，可冲刺“解题高手”目标。</Text>
+          </div>
+        </Card>
+
+        <Row gutter={[20, 20]}>
+          {userStats.achievements.map((achievement) => (
+            <Col xs={24} md={12} xl={8} key={achievement.name}>
+              <Card bordered={false} className={`achievement-card achievement-card--${achievement.tone}`}>
+                <div className="achievement-card__icon">{achievement.icon}</div>
+                <div>
+                  <Title level={5} className="achievement-card__title">
+                    {achievement.name}
+                  </Title>
+                  <Text className="achievement-card__description">
+                    {achievement.description}
+                  </Text>
+                </div>
+              </Card>
+            </Col>
+          ))}
+
+          <Col xs={24} md={12} xl={8}>
+            <Card bordered={false} className="achievement-card achievement-card--locked">
+              <div className="achievement-card__icon">
+                <TrophyOutlined />
               </div>
-            )}
+              <div>
+                <Title level={5} className="achievement-card__title">
+                  解题高手
+                </Title>
+                <Text className="achievement-card__description">
+                  解决 100 道题目后解锁，当前还差 {remainingToMaster} 题。
+                </Text>
+              </div>
+            </Card>
+          </Col>
+        </Row>
+      </div>
+    );
+  };
+
+  const renderSkillsTab = () => {
+    return (
+      <div className="skill-layout">
+        <Card bordered={false} className="dashboard-subcard skill-chart-card">
+          <div className="section-card-header compact">
+            <div>
+              <Text className="section-card-eyebrow">Skill Matrix</Text>
+              <Title level={4} className="section-card-title">
+                技能掌握度
+              </Title>
+            </div>
+          </div>
+
+          <div className="skill-list">
+            {sortedSkills.map((skill, index) => (
+              <div className="skill-list__item" key={skill.name}>
+                <div className="skill-list__header">
+                  <div>
+                    <Text className="skill-list__name">{skill.name}</Text>
+                    <Text className="skill-list__rank">Top {index + 1}</Text>
+                  </div>
+                  <Text className="skill-list__level">{skill.level}%</Text>
+                </div>
+                <Progress
+                  percent={skill.level}
+                  strokeColor={
+                    index === 0
+                      ? { "0%": "#7C3AED", "100%": "#A78BFA" }
+                      : index === sortedSkills.length - 1
+                        ? { "0%": "#F59E0B", "100%": "#FB923C" }
+                        : { "0%": "#6D28D9", "100%": "#8B5CF6" }
+                  }
+                  trailColor="rgba(124, 58, 237, 0.08)"
+                  showInfo={false}
+                />
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card bordered={false} className="dashboard-subcard suggestion-card">
+          <div className="section-card-header compact">
+            <div>
+              <Text className="section-card-eyebrow">Focus Advice</Text>
+              <Title level={4} className="section-card-title">
+                学习建议
+              </Title>
+            </div>
+          </div>
+
+          <div className="suggestion-card__group">
+            <div className="suggestion-card__item">
+              <Text className="suggestion-card__label">优势项</Text>
+              <Title level={5} className="suggestion-card__title">
+                {strongestSkill?.name || "待识别"}
+              </Title>
+              <Paragraph>
+                你在 {strongestSkill?.name || "当前强项"} 上已经形成明显优势，适合继续向更高难度题目扩展。
+              </Paragraph>
+            </div>
+
+            <div className="suggestion-card__item suggestion-card__item--accent">
+              <Text className="suggestion-card__label">优先提升</Text>
+              <Title level={5} className="suggestion-card__title">
+                {focusSkill?.name || "待分析"}
+              </Title>
+              <Paragraph>
+                建议先补强 {focusSkill?.name || "当前短板"}，把掌握度提升到 80% 以上，整体能力会更均衡。
+              </Paragraph>
+            </div>
+          </div>
+
+          <div className="suggestion-card__footer">
+            <Tag className="custom-tag">重点主题</Tag>
+            <Text>
+              用 2 周时间集中完成 {focusSkill?.name || "重点模块"} 相关训练题，再结合 1 场模拟面试做闭环复盘。
+            </Text>
+          </div>
+        </Card>
+      </div>
+    );
+  };
+
+  const renderTabContent = () => {
+    switch (activeTabKey) {
+      case "record":
+        return renderRecordTab();
+      case "interview":
+        return renderInterviewTab();
+      case "achievements":
+        return renderAchievementsTab();
+      case "skills":
+        return renderSkillsTab();
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div id="userCenterPage" className="max-width-content">
+      <section className="center-hero">
+        <div className="center-hero__glow center-hero__glow--left" />
+        <div className="center-hero__glow center-hero__glow--right" />
+
+        <Row gutter={[32, 32]} align="middle">
+          <Col xs={24} lg={15}>
+            <div className="hero-profile">
+              <div className="hero-avatar-shell">
+                <Avatar
+                  src={user.userAvatar}
+                  size={112}
+                  icon={<UserOutlined />}
+                  className="hero-avatar"
+                />
+                <span className="hero-avatar-status">
+                  <CheckCircleFilled />
+                </span>
+              </div>
+
+              <div className="hero-profile__content">
+                <Text className="hero-eyebrow">Personal Growth Hub</Text>
+                <div className="hero-title-row">
+                  <Title level={1} className="hero-name">
+                    {user.userName || "未命名用户"}
+                  </Title>
+                  <Tag className="hero-role-tag">{roleLabel}</Tag>
+                </div>
+
+                <Paragraph className="hero-bio">
+                  {user.userProfile || "这里将展示你的职业标签、成长记录与阶段性成果。"}
+                </Paragraph>
+
+                <div className="hero-chip-row">
+                  <span className="hero-chip">
+                    <BookOutlined /> 完成率 {completionRate}%
+                  </span>
+                  <span className="hero-chip">
+                    <FireOutlined /> 连续 {userStats.streak} 天训练
+                  </span>
+                  <span className="hero-chip">
+                    <VideoCameraOutlined /> {interviewSessions.length} 场面试归档
+                  </span>
+                </div>
+
+                <div className="hero-actions">
+                  <Button
+                    type="primary"
+                    icon={<EditOutlined />}
+                    className="center-primary-button"
+                  >
+                    编辑资料
+                  </Button>
+                  <Button className="center-secondary-button" icon={<RiseOutlined />}>
+                    查看成长路径
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Col>
+
+          <Col xs={24} lg={9}>
+            <div className="hero-metrics-grid">
+              {heroMetrics.map((metric) => (
+                <div className="hero-metric-card" key={metric.label}>
+                  <div className="hero-metric-card__icon">{metric.icon}</div>
+                  <Text className="hero-metric-card__label">{metric.label}</Text>
+                  <Text className="hero-metric-card__value">{metric.value}</Text>
+                  <Text className="hero-metric-card__note">{metric.note}</Text>
+                </div>
+              ))}
+            </div>
+          </Col>
+        </Row>
+      </section>
+
+      <Row gutter={[24, 24]} className="center-main-grid">
+        <Col xs={24} xl={8}>
+          <div className="sidebar-stack">
+            <Card bordered={false} className="side-card side-card--progress">
+              <Text className="side-card__eyebrow">Progress Pulse</Text>
+              <Title level={4} className="side-card__title">
+                成长概览
+              </Title>
+
+              <div className="progress-ring-panel">
+                <Progress
+                  type="circle"
+                  size={116}
+                  percent={completionRate}
+                  strokeColor={{ "0%": "#7C3AED", "100%": "#A78BFA" }}
+                  trailColor="rgba(124, 58, 237, 0.08)"
+                />
+
+                <div className="progress-kpi-list">
+                  <div className="progress-kpi-item">
+                    <Text>已解题</Text>
+                    <strong>{userStats.solved}</strong>
+                  </div>
+                  <div className="progress-kpi-item">
+                    <Text>连续天数</Text>
+                    <strong>{userStats.streak}</strong>
+                  </div>
+                  <div className="progress-kpi-item">
+                    <Text>当前排名</Text>
+                    <strong>#{userStats.ranking}</strong>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card bordered={false} className="side-card">
+              <Text className="side-card__eyebrow">Unlocked Badges</Text>
+              <Title level={4} className="side-card__title">
+                最近勋章
+              </Title>
+
+              <div className="achievement-mini-list">
+                {userStats.achievements.map((achievement) => (
+                  <div className="achievement-mini-item" key={achievement.name}>
+                    <span className={`achievement-mini-item__icon achievement-mini-item__icon--${achievement.tone}`}>
+                      {achievement.icon}
+                    </span>
+                    <div>
+                      <Text className="achievement-mini-item__title">{achievement.name}</Text>
+                      <Text className="achievement-mini-item__desc">{achievement.description}</Text>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card bordered={false} className="side-card side-card--focus">
+              <Text className="side-card__eyebrow">Focus Board</Text>
+              <Title level={4} className="side-card__title">
+                学习焦点
+              </Title>
+
+              <div className="focus-list">
+                {focusItems.map((item) => (
+                  <div className="focus-list__item" key={item.label}>
+                    <Text className="focus-list__label">{item.label}</Text>
+                    <Text className="focus-list__value">{item.value}</Text>
+                    <Text className="focus-list__detail">{item.detail}</Text>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </Col>
+
+        <Col xs={24} xl={16}>
+          <Card bordered={false} className="dashboard-card">
+            <div className="dashboard-card__header">
+              <div>
+                <Text className="dashboard-card__eyebrow">Dashboard View</Text>
+                <Title level={3} className="dashboard-card__title">
+                  {activeTab.label}
+                </Title>
+                <Paragraph className="dashboard-card__description">
+                  {activeTab.description}
+                </Paragraph>
+              </div>
+
+              <div className="tab-switcher">
+                {tabs.map((tab) => (
+                  <button
+                    type="button"
+                    key={tab.key}
+                    className={`tab-switcher__button ${
+                      activeTabKey === tab.key ? "is-active" : ""
+                    }`}
+                    onClick={() => setActiveTabKey(tab.key)}
+                  >
+                    {tab.icon}
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="dashboard-card__body">{renderTabContent()}</div>
           </Card>
         </Col>
       </Row>
-      
-      {/* 面试详情模态框 */}
+
       <Modal
         title={
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <VideoCameraOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-            <span>面试会话详情</span>
-            <Tag color="blue" style={{ marginLeft: 8 }}>
-              ID: {currentSessionId.slice(-8)}
-            </Tag>
+          <div className="detail-modal-title">
+            <span className="detail-modal-title__icon">
+              <VideoCameraOutlined />
+            </span>
+            <div>
+              <Text className="detail-modal-title__eyebrow">Interview Replay</Text>
+              <div className="detail-modal-title__row">
+                <span>面试会话详情</span>
+                <Tag className="detail-modal-title__tag">
+                  ID: {currentSessionId.slice(-8) || "--"}
+                </Tag>
+              </div>
+            </div>
           </div>
         }
         open={detailModalVisible}
         onCancel={handleCloseModal}
         footer={[
-          <Button key="close" onClick={handleCloseModal}>
+          <Button key="close" onClick={handleCloseModal} className="detail-modal-close">
             关闭
-          </Button>
+          </Button>,
         ]}
-        width={800}
+        width={920}
         centered
         className="interview-detail-modal"
       >
         <div className="interview-detail-content">
           {loadingDetails ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div className="interview-detail-loading">
               <Spin size="large" />
-              <div style={{ marginTop: 16 }}>
-                <Text type="secondary">正在加载面试详情...</Text>
-              </div>
+              <Text className="interview-detail-loading__text">正在加载面试详情...</Text>
             </div>
           ) : interviewDetails.length === 0 ? (
             <Empty
@@ -567,150 +889,130 @@ export default function UserCenterPage({ searchParams }: UserCenterPageProps) {
               description="暂无面试记录"
             />
           ) : (
-                          <div>
-                <div className="interview-detail-header">
-                  <Row gutter={[16, 16]} align="middle" justify="center">
-                    <Col>
-                      <Statistic 
-                        title="对话轮次" 
-                        value={interviewDetails.length} 
-                        prefix={<MessageOutlined />}
-                        valueStyle={{ color: '#1890ff', fontSize: '20px' }}
-                      />
-                    </Col>
-                    <Col>
-                      <Statistic 
-                        title="用户回答" 
-                        value={interviewDetails.filter(item => item.type === 'ANSWER').length} 
-                        prefix={<UserIcon />}
-                        valueStyle={{ color: '#52c41a', fontSize: '20px' }}
-                      />
-                    </Col>
-                    <Col>
-                      <Statistic 
-                        title="AI提问" 
-                        value={interviewDetails.filter(item => item.type === 'QUESTION').length} 
-                        prefix={<RobotOutlined />}
-                        valueStyle={{ color: '#722ed1', fontSize: '20px' }}
-                      />
-                    </Col>
-                    <Col>
-                      <Statistic 
-                        title="平均得分" 
-                        value={
-                          interviewDetails.filter(item => item.score).length > 0 
-                            ? Math.round(
-                                interviewDetails
-                                  .filter(item => item.score)
-                                  .reduce((sum, item) => sum + (item.score || 0), 0) / 
-                                interviewDetails.filter(item => item.score).length
-                              )
-                            : 0
-                        } 
-                        suffix="/100"
-                        prefix={<TrophyOutlined />}
-                        valueStyle={{ color: '#faad14', fontSize: '20px' }}
-                      />
-                    </Col>
-                  </Row>
+            <div>
+              <div className="interview-detail-summary">
+                <div className="detail-stat-card">
+                  <Statistic
+                    title="对话轮次"
+                    value={interviewDetails.length}
+                    prefix={<MessageOutlined />}
+                    valueStyle={{ color: "#7C3AED", fontSize: 22 }}
+                  />
                 </div>
-                <Timeline
-                  className="interview-timeline"
-                  items={interviewDetails.map((record, index) => {
-                    const isUser = record.type === 'ANSWER';
-                    const isAI = record.type === 'QUESTION';
-                    return {
-                      key: record.id || index,
-                      dot: isUser ? (
-                        <Avatar 
-                          size="default" 
-                          icon={<UserIcon />} 
-                          style={{ 
-                            backgroundColor: '#1890ff',
-                            border: '2px solid #fff',
-                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)'
-                          }}
-                        />
-                      ) : isAI ? (
-                        <Avatar 
-                          size="default" 
-                          icon={<RobotOutlined />} 
-                          style={{ 
-                            backgroundColor: '#52c41a',
-                            border: '2px solid #fff',
-                            boxShadow: '0 2px 8px rgba(82, 196, 26, 0.3)'
-                          }}
-                        />
-                      ) : (
-                        <Avatar 
-                          size="default" 
-                          icon={<MessageOutlined />} 
-                          style={{ 
-                            backgroundColor: '#faad14',
-                            border: '2px solid #fff',
-                            boxShadow: '0 2px 8px rgba(250, 173, 20, 0.3)'
-                          }}
-                        />
-                      ),
-                      children: (
-                        <div 
-                          className="timeline-item" 
-                          data-type={record.type || 'OTHER'}
-                        >
-                          <div className="timeline-header">
-                            <div>
-                              <Text strong style={{ fontSize: '15px' }}>
-                                {isUser ? '🙋‍♂️ 用户回答' : isAI ? '🤖 AI面试官' : '💬 系统消息'}
-                              </Text>
-                              <Text type="secondary" style={{ fontSize: '13px', marginLeft: 8 }}>
-                                第 {index + 1} 轮
-                              </Text>
-                            </div>
-                            <div className="timeline-meta">
-                              {record.score && (
-                                <Tag 
-                                  color={record.score >= 80 ? 'success' : record.score >= 60 ? 'warning' : 'error'}
-                                  style={{ borderRadius: '12px', fontWeight: 500 }}
-                                >
-                                  <TrophyOutlined style={{ marginRight: 4 }} />
-                                  {record.score} 分
-                                </Tag>
-                              )}
-                              <Text type="secondary" style={{ fontSize: '12px' }}>
-                                {record.createTime 
-                                  ? new Date(record.createTime).toLocaleString('zh-CN', {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })
-                                  : '未知时间'
-                                }
-                              </Text>
-                            </div>
+                <div className="detail-stat-card">
+                  <Statistic
+                    title="用户回答"
+                    value={interviewSummary.answeredCount}
+                    prefix={<UserIcon />}
+                    valueStyle={{ color: "#6D28D9", fontSize: 22 }}
+                  />
+                </div>
+                <div className="detail-stat-card">
+                  <Statistic
+                    title="AI 提问"
+                    value={interviewSummary.aiQuestionCount}
+                    prefix={<RobotOutlined />}
+                    valueStyle={{ color: "#10B981", fontSize: 22 }}
+                  />
+                </div>
+                <div className="detail-stat-card">
+                  <Statistic
+                    title="平均得分"
+                    value={interviewSummary.averageScore}
+                    suffix="/100"
+                    prefix={<TrophyOutlined />}
+                    valueStyle={{ color: "#F59E0B", fontSize: 22 }}
+                  />
+                </div>
+              </div>
+
+              <Timeline
+                className="interview-timeline"
+                items={interviewDetails.map((record, index) => {
+                  const isUser = record.type === "ANSWER";
+                  const isAI = record.type === "QUESTION";
+                  const dotStyle = isUser
+                    ? {
+                        backgroundColor: "#7C3AED",
+                        boxShadow: "0 10px 24px rgba(124, 58, 237, 0.24)",
+                      }
+                    : isAI
+                      ? {
+                          backgroundColor: "#10B981",
+                          boxShadow: "0 10px 24px rgba(16, 185, 129, 0.22)",
+                        }
+                      : {
+                          backgroundColor: "#F59E0B",
+                          boxShadow: "0 10px 24px rgba(245, 158, 11, 0.22)",
+                        };
+
+                  return {
+                    key: record.id || index,
+                    dot: (
+                      <Avatar
+                        size="default"
+                        icon={
+                          isUser ? <UserIcon /> : isAI ? <RobotOutlined /> : <MessageOutlined />
+                        }
+                        style={{
+                          ...dotStyle,
+                          border: "2px solid rgba(255,255,255,0.95)",
+                        }}
+                      />
+                    ),
+                    children: (
+                      <div className="timeline-item" data-type={record.type || "OTHER"}>
+                        <div className="timeline-header">
+                          <div>
+                            <Text className="timeline-header__title">
+                              {isUser
+                                ? "用户回答"
+                                : isAI
+                                  ? "AI 面试官"
+                                  : "系统消息"}
+                            </Text>
+                            <Text className="timeline-header__round">第 {index + 1} 轮</Text>
                           </div>
-                          <div className="timeline-content">
-                            <Paragraph 
-                              style={{ 
-                                marginBottom: 0, 
-                                fontSize: '14px',
-                                whiteSpace: 'pre-wrap'
-                              }}
-                              ellipsis={{ 
-                                rows: 4, 
-                                expandable: true, 
-                                symbol: '展开更多'
-                              }}
-                            >
-                              {record.content || '暂无内容'}
-                            </Paragraph>
+
+                          <div className="timeline-header__meta">
+                            {typeof record.score === "number" && (
+                              <Tag
+                                color={
+                                  record.score >= 80
+                                    ? "success"
+                                    : record.score >= 60
+                                      ? "warning"
+                                      : "error"
+                                }
+                              >
+                                <TrophyOutlined /> {record.score} 分
+                              </Tag>
+                            )}
+
+                            <Text className="timeline-header__time">
+                              {formatDateTime(record.createTime, {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </Text>
                           </div>
                         </div>
-                      ),
-                    };
-                  })}
-                />
-              </div>
+
+                        <div className="timeline-content">
+                          <Paragraph
+                            ellipsis={{ rows: 4, expandable: true, symbol: "展开更多" }}
+                          >
+                            {record.content || "暂无内容"}
+                          </Paragraph>
+                        </div>
+                      </div>
+                    ),
+                  };
+                })}
+              />
+            </div>
           )}
         </div>
       </Modal>

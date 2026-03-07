@@ -1,6 +1,6 @@
 "use client";
 import "./index.css";
-import { useRef, useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { UploadProps } from "antd";
 import {
   Alert,
@@ -8,7 +8,6 @@ import {
   Button,
   Card,
   Empty,
-  List,
   message,
   Modal,
   Progress,
@@ -30,19 +29,11 @@ import {
   WarningOutlined,
   LoadingOutlined,
 } from "@ant-design/icons";
-import Link from "next/link";
 import { uploadFile, questionGet } from "@/api/fileController";
 import ReactMarkdown from "react-markdown";
 import { useRouter } from "next/navigation";
-import QuestionGeneratingOverlay from "./components/QuestionGeneratingOverlay";
 
 const { Title, Paragraph, Text } = Typography;
-
-// 预览文件类型定义
-interface PreviewFileType {
-  fileName: string;
-  publicFileUrl: string;
-}
 
 // 设备测试状态类型
 interface DeviceTestStatus {
@@ -62,7 +53,6 @@ export default function InterViewPage() {
   const [fileUrl, setFileUrl] = useState<string>("");
   const [fileName, setFileName] = useState<string>("");
   const [fileSize, setFileSize] = useState<number>(0);
-  const [previewFile, setPreviewFile] = useState<PreviewFileType | null>(null);
   const [analyzing, setAnalyzing] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<string>("");
   const [showAnalysis, setShowAnalysis] = useState<boolean>(false);
@@ -78,7 +68,7 @@ export default function InterViewPage() {
   
   // 新增：用于存储轮询间隔ID和取消标志
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [isCancelled, setIsCancelled] = useState<boolean>(false);
+  const cancelGenerationRef = useRef(false);
   
   // 新增：设备测试相关状态
   const [deviceTestStatus, setDeviceTestStatus] = useState<DeviceTestStatus>({
@@ -90,7 +80,6 @@ export default function InterViewPage() {
   
   // 新增：进度条状态
   const [currentStep, setCurrentStep] = useState(0); // 0: 上传简历, 1: 面试准备, 2: 开始面试
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   
@@ -121,12 +110,12 @@ export default function InterViewPage() {
   }, [videoStream, audioStream]);
 
   // 滚动提示可见性控制
-  const isNearBottom = (element: HTMLDivElement): boolean => {
+  const isNearBottom = useCallback((element: HTMLDivElement): boolean => {
     const threshold = 8;
     return element.scrollHeight - element.scrollTop - element.clientHeight <= threshold;
-  };
+  }, []);
 
-  const updateScrollHelperVisibility = () => {
+  const updateScrollHelperVisibility = useCallback(() => {
     const container = markdownRef.current;
     if (!container) {
       setShowScrollHelper(false);
@@ -135,11 +124,11 @@ export default function InterViewPage() {
     const isScrollable = container.scrollHeight > container.clientHeight + 1;
     const atBottom = isNearBottom(container);
     setShowScrollHelper(analyzing && isScrollable && !atBottom);
-  };
+  }, [analyzing, isNearBottom]);
 
   useEffect(() => {
     updateScrollHelperVisibility();
-  }, [analyzing, analysisResult, showAnalysis]);
+  }, [analysisResult, showAnalysis, updateScrollHelperVisibility]);
 
   const handleMarkdownScroll = () => {
     updateScrollHelperVisibility();
@@ -374,12 +363,6 @@ export default function InterViewPage() {
           onSuccess("ok");
         }
         setResumeUploaded(true);
-
-        // 设置预览文件
-        setPreviewFile({
-          fileName: file.name,
-          publicFileUrl: fileUrl,
-        });
       } else {
         message.error("上传失败");
         if (onError) {
@@ -418,7 +401,7 @@ export default function InterViewPage() {
     let attempts = 0;
     
     // 重置取消标志
-    setIsCancelled(false);
+    cancelGenerationRef.current = false;
     
     const checkQuestions = async (): Promise<boolean> => {
       try {
@@ -440,7 +423,7 @@ export default function InterViewPage() {
     return new Promise((resolve, reject) => {
       const pollInterval = setInterval(async () => {
         // 检查是否已取消
-        if (isCancelled) {
+        if (cancelGenerationRef.current) {
           clearInterval(pollInterval);
           pollIntervalRef.current = null;
           console.log("题目生成已被用户取消");
@@ -451,8 +434,13 @@ export default function InterViewPage() {
         attempts++;
         
         // 更新进度（渐进式增长，但不超过90%）
-        const progressIncrement = Math.max(1, (90 - generationProgress) / (maxAttempts - attempts + 1));
-        setGenerationProgress(prev => Math.min(90, prev + progressIncrement));
+        setGenerationProgress((prev) => {
+          const progressIncrement = Math.max(
+            1,
+            (90 - prev) / (maxAttempts - attempts + 1)
+          );
+          return Math.min(90, prev + progressIncrement);
+        });
         
         try {
           const isComplete = await checkQuestions();
@@ -463,7 +451,7 @@ export default function InterViewPage() {
             pollIntervalRef.current = null;
             setGenerationProgress(100);
             
-            if (!isCancelled) { // 确保未被取消
+            if (!cancelGenerationRef.current) { // 确保未被取消
               setModalQuestionGenerating(false);
               message.success("题目生成完成，正在跳转...");
               router.push("/interview/start");
@@ -495,12 +483,6 @@ export default function InterViewPage() {
     });
   };
   
-  // 取消题目生成（备用函数）
-  const handleCancelGeneration = () => {
-    // 这个函数已不再使用，保留作为备用
-    message.info("已取消题目生成");
-  };
-  
   // 在模态框中开始面试的处理函数
   const handleModalStartInterview = async () => {
     if (!resumeUploaded) {
@@ -529,7 +511,7 @@ export default function InterViewPage() {
   // 取消模态框中的题目生成
   const handleModalCancelGeneration = () => {
     // 设置取消标志
-    setIsCancelled(true);
+    cancelGenerationRef.current = true;
     
     // 清除轮询间隔
     if (pollIntervalRef.current) {
@@ -713,18 +695,10 @@ export default function InterViewPage() {
     return formattedText;
   };
 
-  // 关闭预览模态框
-  const handleClosePreview = () => {
-    setPreviewFile(null);
-  };
-
-  // 打开预览模态框
+  // 打开文件预览
   const handleOpenPreview = () => {
-    if (fileUrl && fileName) {
-      setPreviewFile({
-        fileName: fileName,
-        publicFileUrl: fileUrl,
-      });
+    if (fileUrl) {
+      window.open(fileUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -817,107 +791,223 @@ export default function InterViewPage() {
     }
   }, [deviceTestStatus, isModalOpen, currentStep]);
 
+  const handleScrollToUpload = () => {
+    document.getElementById("resume-upload-panel")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  const handleScrollToJourney = () => {
+    document.getElementById("journey-panel")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  const completedDeviceChecks = [
+    deviceTestStatus.camera,
+    deviceTestStatus.microphone,
+    deviceTestStatus.lighting,
+  ].filter((status) => status === "success" || status === "warning").length;
+
+  const readinessPercent = Math.min(
+    100,
+    Math.round((resumeUploaded ? 38 : 8) + (completedDeviceChecks / 3) * 62)
+  );
+
+  const readinessLabel = !resumeUploaded
+    ? "上传简历后解锁专属问题路径"
+    : completedDeviceChecks === 3
+      ? "环境已就绪，可直接开始模拟"
+      : `还需完成 ${3 - completedDeviceChecks} 项设备确认`;
+
+  const secondaryHeroAction = resumeUploaded
+    ? handleAnalyzeResume
+    : handleScrollToJourney;
+  const secondaryHeroLabel = resumeUploaded ? "查看简历洞察" : "查看准备流程";
+  const displayFileSize = fileSize ? formatFileSize(fileSize) : "--";
+  
   return (
     <div id="interviewPage">
       <div className="interview-container">
-        {/* 头部区域 */}
-        <div className="interview-header">
-          <Badge.Ribbon text="智能推荐" color="#7C3AED">
-            <Title level={3}>AI 智能模拟面试</Title>
-          </Badge.Ribbon>
-          <Paragraph className="interview-subtitle">
-            利用人工智能技术，模拟真实面试场景，提供专业反馈，助你成功应对各类技术面试
-          </Paragraph>
-        </div>
+        <section className="hero-panel">
+          <div className="hero-copy">
+            <div className="hero-kicker">
+              <span className="hero-kicker-dot" />
+              AI Interview Studio
+            </div>
+            <Title level={1} className="hero-title">
+              <span className="hero-title-line">用更有临场感的模拟面试，</span>
+              <span className="hero-title-line hero-title-accent">把真实上场前的状态先练熟。</span>
+            </Title>
+            <Paragraph className="hero-description">
+              上传简历后，系统会自动生成与你经历匹配的问题脚本，结合环境检测与简历洞察，帮你在正式面试前把表达节奏、镜头状态与项目叙事都调整到最佳。
+            </Paragraph>
+            <div className="hero-chip-list">
+              <div className="hero-chip">个性化题目生成</div>
+              <div className="hero-chip">多维环境就绪检测</div>
+              <div className="hero-chip">实时简历洞察反馈</div>
+            </div>
+            <div className="hero-actions">
+              <Button
+                type="primary"
+                className="hero-button hero-button-primary"
+                onClick={resumeUploaded ? handleStartInterview : handleScrollToUpload}
+              >
+                {resumeUploaded ? "立即开始模拟" : "上传简历开始"}
+              </Button>
+              <Button
+                className="hero-button hero-button-secondary"
+                onClick={secondaryHeroAction}
+                loading={resumeUploaded ? analyzing : false}
+                disabled={resumeUploaded ? analyzing : false}
+              >
+                {secondaryHeroLabel}
+              </Button>
+            </div>
+          </div>
 
-        {/* 主要内容区域 */}
-        <div className="main-section">
-          {/* 左侧：步骤和提示区 */}
-          <div className="info-section">
-            {/* 面试流程 */}
-            <div className="flow-wrapper">
-              <div className="section-title">
-                <InfoCircleOutlined className="section-icon" />
-                <span>面试流程</span>
+          <div className="hero-aside">
+            <div className="readiness-card">
+              <div className="readiness-ring">
+                <div className="readiness-core">
+                  <span className="readiness-caption">面试就绪度</span>
+                  <span className="readiness-value">{readinessPercent}%</span>
+                  <span className="readiness-label">{readinessLabel}</span>
+                </div>
               </div>
 
-              <div className="flow-steps">
+              <div className="hero-signal-list">
+                {statsData.map((stat) => (
+                  <div className="hero-signal-item" key={stat.title}>
+                    <div className="hero-signal-icon">{stat.icon}</div>
+                    <div>
+                      <div className="hero-signal-value">{stat.value}</div>
+                      <div className="hero-signal-title">{stat.title}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="main-section">
+          <div className="info-section">
+            <section className="section-card flow-wrapper" id="journey-panel">
+              <div className="section-header">
+                <div>
+                  <span className="section-tag">Journey</span>
+                  <div className="section-title">
+                    <InfoCircleOutlined className="section-icon" />
+                    <span>面试旅程</span>
+                  </div>
+                </div>
+                <Paragraph className="section-note">
+                  先同步简历，再完成环境确认，最后进入基于经历与项目背景的 AI 模拟面试。
+                </Paragraph>
+              </div>
+
+              <div className="journey-grid">
                 {interviewSteps.map((step, index) => (
-                  <div className="flow-step" key={index}>
-                    <div
-                      className={`flow-step-icon ${step.done ? "step-done" : ""}`}
-                    >
+                  <div
+                    className={`journey-card ${step.done ? "is-complete" : ""}`}
+                    key={step.title}
+                  >
+                    <div className="journey-order">{`0${index + 1}`}</div>
+                    <div className={`journey-icon ${step.done ? "is-complete" : ""}`}>
                       {step.icon}
                     </div>
-                    <div className="flow-step-info">
-                      <div className="flow-step-title">{step.title}</div>
-                      <div className="flow-step-desc">{step.description}</div>
-                    </div>
-                    {index < interviewSteps.length - 1 && (
-                      <div className="flow-step-arrow">
-                        <RightOutlined />
+                    <div className="journey-body">
+                      <div className="journey-title-row">
+                        <span className="journey-title">{step.title}</span>
+                        <span className={`journey-status ${step.done ? "done" : ""}`}>
+                          {step.done ? "已完成" : "待进行"}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 面试须知 */}
-            <div className="tips-wrapper">
-              <div className="section-title">
-                <WarningOutlined className="section-icon" />
-                <span>面试须知</span>
-              </div>
-
-              <div className="tips-list">
-                {interviewTips.map((tip, index) => (
-                  <div className="tip-item" key={index}>
-                    <div className="tip-icon">{tip.icon}</div>
-                    <div className="tip-content">
-                      <div className="tip-title">{tip.title}</div>
-                      <div className="tip-description">{tip.description}</div>
+                      <div className="journey-description">{step.description}</div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
 
-            {/* 数据统计 */}
-            <div className="stats-wrapper">
-              <div className="section-title small">
-                <InfoCircleOutlined className="section-icon" />
-                <span>面试数据</span>
+            <section className="section-card tips-wrapper">
+              <div className="section-header">
+                <div>
+                  <span className="section-tag">Coach Notes</span>
+                  <div className="section-title">
+                    <WarningOutlined className="section-icon" />
+                    <span>作答与镜头建议</span>
+                  </div>
+                </div>
+                <Paragraph className="section-note">
+                  提前把视线、语速和回答结构调顺，能让 AI 反馈更稳定，也更贴近真实面试节奏。
+                </Paragraph>
+              </div>
+
+              <div className="advice-grid">
+                {interviewTips.map((tip) => (
+                  <div className="advice-card" key={tip.title}>
+                    <div className="advice-icon">{tip.icon}</div>
+                    <div className="advice-title">{tip.title}</div>
+                    <div className="advice-description">{tip.description}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="section-card stats-wrapper">
+              <div className="section-header compact">
+                <div>
+                  <span className="section-tag">Signals</span>
+                  <div className="section-title small">
+                    <ScheduleOutlined className="section-icon" />
+                    <span>平台面试数据</span>
+                  </div>
+                </div>
+                <Paragraph className="section-note">
+                  题库与反馈样本持续迭代，帮助你更快找到正式面试中最需要强化的表达重点。
+                </Paragraph>
               </div>
 
               <div className="stats-items">
-                {statsData.map((stat, index) => (
-                  <div className="stat-item" key={index}>
+                {statsData.map((stat) => (
+                  <div className="stat-item" key={stat.title}>
                     <div className="stat-icon">{stat.icon}</div>
                     <div className="stat-value">{stat.value}</div>
                     <div className="stat-title">{stat.title}</div>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           </div>
 
-          {/* 右侧：上传和操作区 */}
-          <div className="upload-section">
-            <div className="section-title">
-              <FileTextOutlined className="section-icon" />
-              <span>简历上传</span>
-            </div>
+          <aside className="upload-section" id="resume-upload-panel">
+            <div className="upload-panel-top">
+              <div className="upload-panel-copy">
+                <span className="section-tag">Resume Sync</span>
+                <div className="section-title">
+                  <FileTextOutlined className="section-icon" />
+                  <span>简历上传与启动台</span>
+                </div>
+                <Text className="upload-panel-description">
+                  上传后即可解锁专属题目生成、AI 简历分析与正式模拟面试入口。
+                </Text>
+              </div>
 
-            <div className="info-message">
-              <InfoCircleOutlined className="info-icon" />
-              <Text className="info-text">
-                AI将根据您的简历内容生成个性化面试问题
-              </Text>
+              <div className="upload-readiness-badge">
+                <span className="upload-readiness-label">当前状态</span>
+                <strong>{resumeUploaded ? "已同步简历" : "等待上传"}</strong>
+              </div>
             </div>
 
             {!resumeUploaded ? (
-              <div className="upload-wrapper">
+              <div className="upload-dropzone">
+                <div className="upload-orbit">
+                  <UploadOutlined />
+                </div>
                 <Upload
                   maxCount={1}
                   beforeUpload={beforeUpload}
@@ -929,20 +1019,47 @@ export default function InterViewPage() {
                   <Button icon={<UploadOutlined />} className="upload-button">
                     选择文件上传
                   </Button>
-                  <Text type="secondary" className="upload-hint">
-                    支持 PDF、Word 文档
-                  </Text>
+                  <Text className="upload-hint">支持 PDF、Word 文档</Text>
                 </Upload>
+
+                <div className="upload-support-grid">
+                  <div className="support-card">
+                    <span className="support-label">支持格式</span>
+                    <strong>PDF / DOCX</strong>
+                  </div>
+                  <div className="support-card">
+                    <span className="support-label">预计体验</span>
+                    <strong>15 - 20 min</strong>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="upload-success">
-                <CheckCircleOutlined className="success-icon" />
-                <div className="success-content">
-                  <Text strong className="success-text">
-                    简历上传成功!
-                  </Text>
-                  <Progress percent={100} status="success" size="small" />
+              <div className="upload-success-card">
+                <div className="upload-success-head">
+                  <CheckCircleOutlined className="success-icon" />
+                  <div className="success-content">
+                    <Text strong className="success-text">
+                      简历已同步完成
+                    </Text>
+                    <Text className="success-subtext">
+                      AI 会基于当前简历内容生成更贴合经历的问题路径。
+                    </Text>
+                  </div>
                 </div>
+
+                <Progress percent={100} status="success" size="small" />
+
+                <div className="upload-meta-grid">
+                  <div className="upload-meta-item">
+                    <span className="upload-meta-label">文件名称</span>
+                    <strong className="upload-meta-value">{fileName}</strong>
+                  </div>
+                  <div className="upload-meta-item">
+                    <span className="upload-meta-label">文件大小</span>
+                    <strong className="upload-meta-value">{displayFileSize}</strong>
+                  </div>
+                </div>
+
                 <div className="file-actions">
                   <Button
                     type="link"
@@ -954,6 +1071,21 @@ export default function InterViewPage() {
                 </div>
               </div>
             )}
+
+            <div className="upload-hint-list">
+              <div className="upload-hint-item">
+                <InfoCircleOutlined className="info-icon" />
+                <span>系统会根据项目、技能与经历关键词生成更聚焦的问题路径。</span>
+              </div>
+              <div className="upload-hint-item">
+                <SoundOutlined className="info-icon" />
+                <span>开始模拟前建议先完成设备检测，提升识别准确率与整体体验。</span>
+              </div>
+              <div className="upload-hint-item">
+                <FileSearchOutlined className="info-icon" />
+                <span>可先查看简历分析，再针对薄弱点做专项强化练习。</span>
+              </div>
+            </div>
 
             {resumeUploaded && (
               <div className="action-button-container">
@@ -976,26 +1108,45 @@ export default function InterViewPage() {
                 </Button>
               </div>
             )}
-          </div>
+          </aside>
         </div>
 
-        {/* 简历分析结果区域 */}
         {showAnalysis && (
-          <div className="analysis-section">
+          <section className="analysis-section">
+            <div className="analysis-header-strip">
+              <div>
+                <span className="section-tag">AI Insight</span>
+                <Title level={2} className="analysis-title">
+                  简历分析结果
+                </Title>
+              </div>
+              <Text className="analysis-header-note">
+                {analyzing
+                  ? "洞察正在持续生成，内容会以流式方式实时补全。"
+                  : "分析完成后，可据此优化项目表述、回答重点与面试叙事。"}
+              </Text>
+            </div>
+
             <Card
               title={
-                <div className="section-title">
+                <div className="analysis-card-title">
                   <FileSearchOutlined className="section-icon" />
-                  <span>简历分析结果 {analyzing && <Spin size="small" style={{ marginLeft: '10px' }} />}</span>
+                  <div className="analysis-card-title-copy">
+                    <span className="analysis-card-title-label">智能简历洞察</span>
+                    <span className="analysis-card-title-subtitle">
+                      {analyzing ? "实时生成中" : "已生成完成，可继续复盘"}
+                    </span>
+                  </div>
+                  {analyzing && <Spin size="small" style={{ marginLeft: "10px" }} />}
                 </div>
               }
               className="analysis-card"
               extra={
-                <Button 
-                  type="link" 
-                  onClick={() => {
-                    if (analyzing && eventSourceRef.current) {
-                      eventSourceRef.current.close();
+                  <Button 
+                    type="link" 
+                    onClick={() => {
+                      if (analyzing && eventSourceRef.current) {
+                        eventSourceRef.current.close();
                       setAnalyzing(false);
                     }
                     setShowAnalysis(false);
@@ -1045,7 +1196,7 @@ export default function InterViewPage() {
                 <Empty description="暂无分析结果" />
               )}
             </Card>
-          </div>
+          </section>
         )}
       </div>
 
@@ -1098,6 +1249,20 @@ export default function InterViewPage() {
               </div>
             </div>
           )}
+
+          <div className="modal-summary">
+            <div className="modal-summary-copy">
+              <span className="section-tag">Checklist</span>
+              <p>
+                开始前完成设备与环境确认，系统会根据简历内容生成本场专属问题，并在过程里持续记录你的表现信号。
+              </p>
+            </div>
+            <div className="modal-summary-badge">
+              <span>当前准备度</span>
+              <strong>{readinessPercent}%</strong>
+            </div>
+          </div>
+
           {/* 进度指示器 */}
           <div className="modal-progress">
             <div className={`progress-step ${currentStep >= 0 ? 'active' : ''}`}>

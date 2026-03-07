@@ -1,5 +1,5 @@
 "use client";
-import {listQuestionVoByPage, searchQuestionVoByPage} from "@/api/questionController";
+import { searchQuestionVoByPage } from "@/api/questionController";
 import type { ActionType, ProColumns } from "@ant-design/pro-components";
 import { ProTable } from "@ant-design/pro-components";
 import React, { useRef, useState } from "react";
@@ -69,7 +69,7 @@ const QuestionTable: React.FC = (props: Props) => {
     <div className={"question-table"}>
       <ProTable<API.QuestionVO>
         actionRef={actionRef}
-        size="large"
+        size="middle"
         search={{
           labelWidth: "auto",
         }}

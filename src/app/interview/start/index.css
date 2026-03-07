@@ -302,18 +302,45 @@
 }
 
 .chat-header {
-  height: 60px;
+  min-height: 108px;
   border-bottom: 1px solid #eaeaea;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 20px 24px 18px;
+  background: linear-gradient(180deg, rgba(79, 110, 242, 0.04) 0%, rgba(79, 110, 242, 0) 100%);
+}
+
+.chat-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(79, 110, 242, 0.08);
+  color: #5b4ef7;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
 }
 
 .chat-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #1f2b4d;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Songti SC", serif;
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.06em;
 }
 
 .chat-actions {
@@ -721,6 +748,20 @@
   
   .chat-area {
     height: 400px;
+  }
+
+  .chat-header {
+    min-height: 92px;
+    padding: 18px 18px 16px;
+  }
+
+  .chat-badge {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+  }
+
+  .chat-title {
+    font-size: 1.8rem;
   }
   
   .tools-panel {

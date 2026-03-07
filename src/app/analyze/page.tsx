@@ -1,3 +1,20 @@
+/**
+ * 视频分析页面
+ * 
+ * 功能说明：
+ * 1. 视频上传：支持拖拽或点击上传视频文件
+ * 2. SSE流式分析：通过Server-Sent Events实时获取分析进度和结果
+ * 3. 雷达图展示：基于7个维度展示面试表现评分
+ *    - 语言逻辑、面部表情、眼神交流、技能匹配、专业知识、情感语调、职业形象
+ * 4. Markdown渲染：支持表格、列表等格式化内容展示
+ * 
+ * 实现方式：
+ * - 使用 Ant Design 的 Upload 组件处理文件上传
+ * - 通过 EventSource API 建立SSE连接，实时接收分析数据
+ * - 使用 ECharts 渲染雷达图，展示7维度评分
+ * - 使用 react-markdown 渲染分析结果文本
+ */
+
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Layout, Upload, Button, Spin, Typography, message } from "antd";
@@ -131,19 +148,21 @@ export default function Analyze() {
       radar: {
         indicator: [
           { name: '语言逻辑', max: 100 },
-          { name: '专业知识', max: 100 },
-          { name: '技能匹配', max: 100 },
+          { name: '面部表情', max: 100 },
           { name: '眼神交流', max: 100 },
-          { name: '面部表情', max: 100 }
+          { name: '技能匹配', max: 100 },
+          { name: '专业知识', max: 100 },
+          { name: '情感语调', max: 100 },
+          { name: '职业形象', max: 100 }
         ],
         center: ['50%', '60%'],  // 将雷达图中心点下移
-        radius: '70%',           // 调整雷达图大小
+        radius: '65%',           // 调整雷达图大小，7个维度时稍微缩小以适应更多标签
         shape: 'polygon',
         splitNumber: 4,
         axisName: {
           color: '#333',
-          fontSize: 14,
-          padding: [0, 15]      // 增加轴名称与图的距离
+          fontSize: 13,          // 稍微减小字体以适应更多维度
+          padding: [0, 12]       // 调整轴名称与图的距离
         },
         splitArea: {
           areaStyle: {
@@ -168,7 +187,7 @@ export default function Analyze() {
         type: 'radar',
         data: [
           {
-            value: [85, 78, 90, 82, 75],
+            value: [85, 78, 82, 90, 88, 75, 80],  // 7个维度的示例数据
             name: '评分',
             areaStyle: {
               color: 'rgba(64, 169, 255, 0.6)'

@@ -59,9 +59,9 @@ export default function BasicLayout({ children }: Props) {
       }}
     >
       <ProLayout
-        title="智面星图AI评测平台"
+        title="数智面聘"
         layout="top"
-        logo={<Image src="/assets/logo.png" height={32} width={32} alt="智面星图AI评测平台" />}
+        logo={<Image src="/assets/logo.png" height={32} width={32} alt="数智面聘" />}
         location={{
           pathname,
         }}

@@ -1,11 +1,17 @@
 import axios from 'axios'
 
+
+// 创建 Axios 实例
+// 区分开发和生产环境
+const DEV_BASE_URL = "http://localhost:8811/api";
 // 创建 Axios 示例
+const PROD_BASE_URL = "http://121.4.252.156/api";
 const myAxios = axios.create({
-  baseURL: 'http://localhost:8811/api',
-  timeout: 60000,
+  baseURL: DEV_BASE_URL,
+  timeout: 10000,
   withCredentials: true,
-})
+});
+
 
 // 创建请求拦截器
 myAxios.interceptors.request.use(

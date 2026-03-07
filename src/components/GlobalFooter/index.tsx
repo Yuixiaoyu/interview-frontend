@@ -19,7 +19,7 @@ export default function GlobalFooter() {
         paddingBlockStart: 12,
       }}
     >
-      <div>© {currentYear} 给我一个Offer</div>
+      <div>© {currentYear} 面面聚到团队</div>
       <div
         style={{
           fontSize: 16,
@@ -28,7 +28,7 @@ export default function GlobalFooter() {
           marginTop: 8,
         }}
       >
-      作者： 给我一个Offer团队
+      作者： 面面聚到团队
     </div>
     </div>
   )
