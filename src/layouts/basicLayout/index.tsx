@@ -54,72 +54,83 @@ export default function BasicLayout({ children }: Props) {
     <div
       id="basicLayout"
       style={{
-        height: '100vh',
-        overflow: 'auto',
+        height: "100vh",
+        overflow: "auto",
       }}
     >
       <ProLayout
-        title="数智面聘"
+        title="AI智能模拟面试"
         layout="top"
-        logo={<Image src="/assets/logo.png" height={32} width={32} alt="数智面聘" />}
+        logo={
+          <Image
+            src="/assets/logo.png"
+            height={32}
+            width={32}
+            alt="AI智能模拟面试"
+          />
+        }
         location={{
           pathname,
         }}
         avatarProps={{
-          src: loginUser.userAvatar || '/assets/logo11.png',
-          size: 'small',
-          title: loginUser.userName || '锦鲤',
+          src: loginUser.userAvatar || "/assets/logo11.png",
+          size: "small",
+          title: loginUser.userName || "锦鲤",
           render: (props, dom) => {
             if (!loginUser.id) {
               return (
                 <div
                   onClick={() => {
-                    router.push('/user/login')
+                    router.push("/user/login");
                   }}
                 >
                   {dom}
                 </div>
-              )
+              );
             }
             return (
               <Dropdown
                 menu={{
                   items: [
                     {
-                      key: 'userCenter',
+                      key: "userCenter",
                       icon: <UserOutlined />,
-                      label: '个人中心',
+                      label: "个人中心",
                     },
                     {
-                      key: 'logout',
+                      key: "logout",
                       icon: <LogoutOutlined />,
-                      label: '退出登录',
+                      label: "退出登录",
                     },
                   ],
                   onClick: async (event: { key: React.Key }) => {
-                    const { key } = event
-                    if (key === 'logout') {
-                      handleUserLogout()
-                    }else if(key=== 'userCenter') {
-                      router.push('/user/center')
+                    const { key } = event;
+                    if (key === "logout") {
+                      handleUserLogout();
+                    } else if (key === "userCenter") {
+                      router.push("/user/center");
                     }
                   },
                 }}
               >
                 {dom}
               </Dropdown>
-            )
+            );
           },
         }}
         actionsRender={(props) => {
-          if (props.isMobile) return []
+          if (props.isMobile) return [];
           return [
-              //如果当前页面是在questions页面则不展示SearchInput组件
+            //如果当前页面是在questions页面则不展示SearchInput组件
             !pathname.startsWith("/questions") && <SearchInput key="search" />,
-            <a key="link" href="https://github.com/Yuixiaoyu/interview" target="_blank">
+            <a
+              key="link"
+              href="https://github.com/Yuixiaoyu/interview"
+              target="_blank"
+            >
               <GithubFilled key="GithubFilled" />,
             </a>,
-          ]
+          ];
         }}
         headerTitleRender={(logo, title, _) => {
           return (
@@ -127,20 +138,20 @@ export default function BasicLayout({ children }: Props) {
               {logo}
               {title}
             </a>
-          )
+          );
         }}
         //渲染底部栏
         footerRender={() => {
-          return <GlobalFooter />
+          return <GlobalFooter />;
         }}
         onMenuHeaderClick={(e) => console.log(e)}
         //定义有哪些菜单
         menuDataRender={() => {
-          return getAccessibleMenus(loginUser, menus)
+          return getAccessibleMenus(loginUser, menus);
         }}
         //定义菜单项的渲染
         menuItemRender={(item, dom) => (
-          <Link href={item.path || '/'} target={item.target}>
+          <Link href={item.path || "/"} target={item.target}>
             {dom}
           </Link>
         )}
@@ -148,5 +159,5 @@ export default function BasicLayout({ children }: Props) {
         {children}
       </ProLayout>
     </div>
-  )
+  );
 }

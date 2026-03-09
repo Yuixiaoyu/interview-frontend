@@ -13,23 +13,23 @@ export default function GlobalFooter() {
 
   return (
     <div
-      className='global-footer'
+      className="global-footer"
       style={{
-        textAlign: 'center',
+        textAlign: "center",
         paddingBlockStart: 12,
       }}
     >
-      <div>© {currentYear} 面面聚到团队</div>
+      <div>© {currentYear} powered by 飞宇</div>
       <div
         style={{
           fontSize: 16,
-          color: '#3b64d4',
-          fontWeight: 'bold',
+          color: "#3b64d4",
+          fontWeight: "bold",
           marginTop: 8,
         }}
       >
-      作者： 面面聚到团队
+        作者：飞宇
+      </div>
     </div>
-    </div>
-  )
+  );
 }
