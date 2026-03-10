@@ -1,5 +1,511 @@
-#homePage{
-    background-color: #f8f8f8;
-    padding: 20px;
-    text-align: center;
+#userRegisterPage {
+  --register-primary: #7c3aed;
+  --register-primary-deep: #5b21b6;
+  --register-primary-soft: #a78bfa;
+  --register-ink: #1f1147;
+  --register-text: #4c4567;
+  --register-line: rgba(124, 58, 237, 0.14);
+  --register-card-bg: rgba(255, 255, 255, 0.72);
+  position: relative;
+  min-height: calc(100vh - 124px);
+  padding: 40px 24px 56px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(167, 139, 250, 0.18), transparent 30%),
+    radial-gradient(circle at 84% 14%, rgba(124, 58, 237, 0.22), transparent 24%),
+    linear-gradient(180deg, #f6f1ff 0%, #faf7ff 38%, #ffffff 100%);
+}
+
+#userRegisterPage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.84), transparent 95%);
+  pointer-events: none;
+}
+
+.register-page__mesh,
+.register-page__glow {
+  pointer-events: none;
+  position: absolute;
+  inset: auto;
+  z-index: 0;
+}
+
+.register-page__mesh {
+  top: 48%;
+  left: 50%;
+  width: min(70vw, 920px);
+  height: min(70vw, 920px);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.74) 0%, rgba(255, 255, 255, 0) 70%);
+  filter: blur(10px);
+}
+
+.register-page__glow {
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(10px);
+  opacity: 0.55;
+}
+
+.register-page__glow--left {
+  left: -90px;
+  bottom: 8%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.44) 0%, rgba(167, 139, 250, 0) 72%);
+}
+
+.register-page__glow--right {
+  right: -80px;
+  top: 6%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.34) 0%, rgba(124, 58, 237, 0) 72%);
+}
+
+.register-page__shell {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(380px, 0.88fr);
+  gap: 28px;
+  align-items: center;
+}
+
+.register-page__hero {
+  padding: 18px 10px 18px 0;
+}
+
+.register-page__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  box-shadow: 0 12px 30px rgba(91, 33, 182, 0.08);
+  color: var(--register-primary);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.register-page__title {
+  margin: 26px 0 18px;
+  color: var(--register-ink);
+  font-size: clamp(2.7rem, 5vw, 4.8rem);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.register-page__title-accent {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--register-primary) 0%, var(--register-primary-deep) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.register-page__description {
+  max-width: 640px;
+  color: var(--register-text);
+  font-size: 17px;
+  line-height: 1.9;
+}
+
+.register-page__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.register-page__tag {
+  padding: 10px 16px;
+  border-radius: 999px;
+  color: #5b4b8a;
+  font-size: 14px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.register-page__benefits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 34px;
+}
+
+.register-page__benefit-card {
+  position: relative;
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  box-shadow: 0 18px 42px rgba(91, 33, 182, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.register-page__benefit-card:last-child {
+  grid-column: span 2;
+}
+
+.register-page__benefit-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(124, 58, 237, 0.05) 100%);
+  color: var(--register-primary);
+  font-size: 20px;
+}
+
+.register-page__benefit-card h3 {
+  margin-bottom: 8px;
+  color: var(--register-ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.register-page__benefit-card p {
+  color: var(--register-text);
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+.register-page__hero-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.register-page__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #43376e;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.register-page__status .anticon {
+  color: var(--register-primary);
+  font-size: 16px;
+}
+
+.register-page__login-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--register-primary);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.register-page__login-link:hover {
+  color: var(--register-primary-deep);
+  transform: translateX(4px);
+}
+
+.register-page__panel {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.register-card {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  padding: 30px;
+  border-radius: 32px;
+  background: var(--register-card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 28px 80px rgba(76, 29, 149, 0.16);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+
+.register-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.08) 100%);
+  pointer-events: none;
+}
+
+.register-card__shine {
+  position: absolute;
+  top: -140px;
+  right: -60px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.42) 0%, rgba(167, 139, 250, 0) 68%);
+  filter: blur(6px);
+}
+
+.register-card__brand,
+.register-card__intro,
+.register-form,
+.register-card__footer {
+  position: relative;
+  z-index: 1;
+}
+
+.register-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.register-card__logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  /*background: linear-gradient(135deg, rgba(124, 58, 237, 0.14) 0%, rgba(167, 139, 250, 0.2) 100%);*/
+  /*box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);*/
+}
+
+.register-card__logo {
+  width: 100px;
+  height: 100px;
+  /*object-fit: contain;*/
+}
+
+.register-card__brand-label {
+  margin-bottom: 4px;
+  color: var(--register-primary);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.register-card__brand-title {
+  color: var(--register-ink);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.register-card__intro {
+  margin-top: 18px;
+  margin-bottom: 24px;
+  color: #5c527d;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.register-form .ant-form-item {
+  margin-bottom: 18px;
+}
+
+.register-form .ant-input-affix-wrapper {
+  min-height: 56px;
+  padding-inline: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--register-line);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.register-form .ant-input-affix-wrapper .ant-input {
+  min-height: auto;
+  padding-inline: 0;
+  background: transparent;
+  border: none !important;
+  outline: none;
+  box-shadow: none;
+}
+
+.register-form .ant-input-affix-wrapper:hover,
+.register-form .ant-input-affix-wrapper:focus,
+.register-form .ant-input-affix-wrapper-focused {
+  border-color: rgba(124, 58, 237, 0.38);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.08);
+}
+
+.register-form__field-icon,
+.register-form .ant-input-password-icon {
+  color: var(--register-primary);
+}
+
+.register-form .ant-form-item-explain-error {
+  margin-top: 6px;
+}
+
+.register-form__submit-wrap {
+  margin-top: 8px;
+}
+
+.register-form__submit.ant-btn {
+  position: relative;
+  height: 56px;
+  border: 1px solid rgba(91, 33, 182, 0.3);
+  border-radius: 18px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  background: linear-gradient(180deg, #6d28d9 0%, #5b21b6 100%) !important;
+  box-shadow:
+    0 12px 24px rgba(91, 33, 182, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: box-shadow 0.2s ease, filter 0.2s ease, border-color 0.2s ease;
+}
+
+.register-form__submit.ant-btn::after {
+  display: none !important;
+}
+
+.register-form__submit.ant-btn:hover,
+.register-form__submit.ant-btn:focus {
+  color: #ffffff !important;
+  border-color: rgba(91, 33, 182, 0.34);
+  background: linear-gradient(180deg, #6d28d9 0%, #5b21b6 100%) !important;
+  box-shadow:
+    0 14px 28px rgba(91, 33, 182, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  filter: brightness(1.03);
+}
+
+.register-form__submit.ant-btn:active {
+  color: #ffffff !important;
+  background: linear-gradient(180deg, #6530c7 0%, #5420aa 100%) !important;
+  box-shadow:
+    0 8px 18px rgba(91, 33, 182, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  filter: none;
+}
+
+.register-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 22px;
+  color: #675f85;
+  font-size: 14px;
+}
+
+.register-card__footer-link {
+  color: var(--register-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.register-card__footer-link:hover {
+  color: var(--register-primary-deep);
+}
+
+@media (max-width: 1100px) {
+  #userRegisterPage {
+    padding-top: 28px;
+  }
+
+  .register-page__shell {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .register-page__hero {
+    padding-right: 0;
+  }
+
+  .register-page__panel {
+    justify-content: flex-start;
+  }
+
+  .register-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  #userRegisterPage {
+    min-height: auto;
+    padding: 20px 16px 40px;
+  }
+
+  .register-page__title {
+    margin-top: 22px;
+    font-size: 2.5rem;
+  }
+
+  .register-page__description {
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  .register-page__benefits {
+    grid-template-columns: 1fr;
+  }
+
+  .register-page__benefit-card:last-child {
+    grid-column: span 1;
+  }
+
+  .register-page__hero-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .register-card {
+    padding: 24px 20px;
+    border-radius: 26px;
+  }
+
+  .register-card__brand-title {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-page__badge,
+  .register-page__tag {
+    font-size: 12px;
+  }
+
+  .register-page__title {
+    font-size: 2.15rem;
+  }
+
+  .register-card__brand {
+    align-items: flex-start;
+  }
+
+  .register-card__logo-wrap {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+  }
+
+  .register-form .ant-input-affix-wrapper,
+  .register-form__submit.ant-btn {
+    min-height: 52px;
+    height: 52px;
+  }
 }
