@@ -8,7 +8,10 @@ import {
   Card,
   Col,
   Empty,
+  Form,
+  Input,
   List,
+  message,
   Modal,
   Progress,
   Row,
@@ -17,15 +20,18 @@ import {
   Tag,
   Timeline,
   Typography,
+  Upload,
 } from "antd";
-import { useSelector } from "react-redux";
-import { RootState } from "@/stores";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/stores";
 import { useEffect, useMemo, useState } from "react";
 import CalendarChart from "@/app/user/center/components/CalendarChart";
 import {
   getInterviewDetailBySessionId,
   getInterviewSession,
 } from "@/api/aiInterviewController";
+import { uploadFile } from "@/api/fileController";
+import { getLoginUser, updateMyUser } from "@/api/userController";
 import {
   BookOutlined,
   CalendarOutlined,
@@ -40,13 +46,17 @@ import {
   RobotOutlined,
   StarOutlined,
   TrophyOutlined,
+  UploadOutlined,
   UserOutlined,
   UserOutlined as UserIcon,
   VideoCameraOutlined,
 } from "@ant-design/icons";
 import ACCESS_ENUM from "@/access/accessEnum";
+import DEFAULT_USER from "@/constants/user";
+import { setLoginUser } from "@/stores/loginUser";
 
 const { Text } = Typography;
+const { TextArea } = Input;
 
 type TabKey = "record" | "interview" | "achievements" | "skills";
 
@@ -105,8 +115,17 @@ const formatDateTime = (
   return date.toLocaleString("zh-CN", options);
 };
 
+const normalizeTextValue = (value?: string) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+  return value.trim();
+};
+
 export default function UserCenterPage() {
   const user = useSelector((state: RootState) => state.loginUser);
+  const dispatch = useDispatch<AppDispatch>();
+  const [profileForm] = Form.useForm<API.UserUpdateMyRequest>();
 
   const userStats = {
     solved: 78,
@@ -147,12 +166,18 @@ export default function UserCenterPage() {
   };
 
   const [activeTabKey, setActiveTabKey] = useState<TabKey>("record");
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [interviewSessions, setInterviewSessions] = useState<API.AiSession[]>([]);
   const [loadingInterviews, setLoadingInterviews] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState("");
   const [interviewDetails, setInterviewDetails] = useState<API.AiInterviewRecords[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const editingUserName = Form.useWatch("userName", profileForm);
+  const editingUserAvatar = Form.useWatch("userAvatar", profileForm);
+  const editingUserProfile = Form.useWatch("userProfile", profileForm);
 
   const completionRate = Math.round(
     (userStats.solved / userStats.totalQuestions) * 100
@@ -205,6 +230,20 @@ export default function UserCenterPage() {
   const activeTab = tabs.find((tab) => tab.key === activeTabKey) ?? tabs[0];
   const roleLabel =
     user.userRole === ACCESS_ENUM.ADMIN ? "管理员身份" : "成长用户";
+  const profilePreviewName =
+    typeof editingUserName === "string"
+      ? normalizeTextValue(editingUserName) || "未命名用户"
+      : user.userName || "未命名用户";
+  const profilePreviewAvatar =
+    typeof editingUserAvatar === "string"
+      ? normalizeTextValue(editingUserAvatar) || undefined
+      : user.userAvatar || DEFAULT_USER.userAvatar;
+  const profilePreviewBio =
+    typeof editingUserProfile === "string"
+      ? normalizeTextValue(editingUserProfile) ||
+        "这段简介会展示在你的个人主页顶部，帮助别人更快认识你。"
+      : user.userProfile ||
+        "这段简介会展示在你的个人主页顶部，帮助别人更快认识你。";
 
   const heroMetrics = [
     {
@@ -285,6 +324,124 @@ export default function UserCenterPage() {
     setCurrentSessionId(sessionId);
     setDetailModalVisible(true);
     fetchInterviewDetails(sessionId);
+  };
+
+  const handleOpenProfileEditor = () => {
+    if (!user.id) {
+      message.warning("请先登录后再编辑资料");
+      return;
+    }
+    profileForm.setFieldsValue({
+      userName: user.userName ?? "",
+      userAvatar: user.userAvatar ?? "",
+      userProfile: user.userProfile ?? "",
+    });
+    setProfileModalVisible(true);
+  };
+
+  const handleCloseProfileEditor = () => {
+    setProfileModalVisible(false);
+    profileForm.resetFields();
+  };
+
+  const beforeAvatarUpload = (file: File) => {
+    const isSupportedImage =
+      [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/svg+xml",
+        "image/webp",
+      ].includes(file.type) ||
+      /\.(jpe?g|png|svg|webp)$/i.test(file.name);
+    if (!isSupportedImage) {
+      message.error("只支持 JPG、PNG、SVG、WEBP 格式的头像");
+      return Upload.LIST_IGNORE;
+    }
+
+    const isWithinLimit = file.size / 1024 / 1024 <= 1;
+    if (!isWithinLimit) {
+      message.error("头像文件不能超过 1MB");
+      return Upload.LIST_IGNORE;
+    }
+
+    return true;
+  };
+
+  const handleAvatarUpload = async ({ file, onSuccess, onError }: any) => {
+    const formData = new FormData();
+    formData.append("file", file as File);
+
+    try {
+      setUploadingAvatar(true);
+      const response = await uploadFile({ biz: "avatar" }, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (response?.data) {
+        profileForm.setFieldValue("userAvatar", String(response.data));
+        message.success("头像上传成功，记得保存资料");
+        onSuccess?.("ok");
+        return;
+      }
+
+      throw new Error("头像上传失败");
+    } catch (error: any) {
+      message.error(error?.message ?? "头像上传失败");
+      onError?.(error);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleResetAvatar = () => {
+    profileForm.setFieldValue("userAvatar", DEFAULT_USER.userAvatar);
+    message.success("已恢复为默认头像，保存后生效");
+  };
+
+  const refreshCurrentUser = async (fallbackValues?: API.UserUpdateMyRequest) => {
+    try {
+      const response = await getLoginUser();
+      if (response.data) {
+        dispatch(setLoginUser(response.data as API.LoginUserVO));
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to refresh current user:", error);
+    }
+
+    if (fallbackValues) {
+      dispatch(
+        setLoginUser({
+          ...user,
+          ...fallbackValues,
+        } as API.LoginUserVO)
+      );
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const values = await profileForm.validateFields();
+      const payload: API.UserUpdateMyRequest = {
+        userName: normalizeTextValue(values.userName),
+        userAvatar: normalizeTextValue(values.userAvatar),
+        userProfile: normalizeTextValue(values.userProfile),
+      };
+
+      setSavingProfile(true);
+      await updateMyUser(payload);
+      await refreshCurrentUser(payload);
+      message.success("个人资料已更新");
+      handleCloseProfileEditor();
+    } catch (error: any) {
+      if (error?.errorFields) {
+        return;
+      }
+      message.error(`更新失败：${error?.message ?? "请稍后重试"}`);
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -713,6 +870,7 @@ export default function UserCenterPage() {
                     type="primary"
                     icon={<EditOutlined />}
                     className="center-primary-button"
+                    onClick={handleOpenProfileEditor}
                   >
                     编辑资料
                   </Button>
@@ -848,6 +1006,170 @@ export default function UserCenterPage() {
           </Card>
         </Col>
       </Row>
+
+      <Modal
+        title={
+          <div className="profile-edit-title">
+            <span className="profile-edit-title__icon">
+              <EditOutlined />
+            </span>
+            <div>
+              <div className="profile-edit-title__row">
+                <span>编辑个人资料</span>
+              </div>
+              <Text className="profile-edit-title__desc">
+                修改头像、昵称和简介，保存后会同步更新到当前账号。
+              </Text>
+            </div>
+          </div>
+        }
+        open={profileModalVisible}
+        onCancel={handleCloseProfileEditor}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={handleCloseProfileEditor}
+            className="profile-edit-cancel"
+          >
+            暂不修改
+          </Button>,
+          <Button
+            key="save"
+            type="primary"
+            loading={savingProfile}
+            onClick={handleSaveProfile}
+            className="profile-edit-submit"
+          >
+            保存资料
+          </Button>,
+        ]}
+        width={860}
+        centered
+        className="profile-edit-modal"
+      >
+        <div className="profile-edit-layout">
+          <section className="profile-edit-preview">
+            <Text className="profile-edit-preview__eyebrow">实时预览</Text>
+            <div className="profile-edit-preview__hero">
+              <Avatar
+                src={profilePreviewAvatar}
+                size={84}
+                icon={<UserOutlined />}
+                className="profile-edit-preview__avatar"
+              />
+              <div className="profile-edit-preview__identity">
+                <Title level={3} className="profile-edit-preview__name">
+                  {profilePreviewName}
+                </Title>
+                <Tag className="profile-edit-preview__tag">{roleLabel}</Tag>
+              </div>
+            </div>
+
+            <Paragraph className="profile-edit-preview__bio">
+              {profilePreviewBio}
+            </Paragraph>
+
+            <div className="profile-edit-preview__tips">
+              <span className="profile-edit-preview__tip">保存后会同步更新导航头像和个人中心</span>
+              <span className="profile-edit-preview__tip">更换头像后，仍需要点击“保存资料”才会生效</span>
+            </div>
+          </section>
+
+          <section className="profile-edit-panel">
+            <div className="profile-edit-panel__heading">
+              <Text className="profile-edit-panel__eyebrow">基本信息</Text>
+              <Text className="profile-edit-panel__desc">
+                尽量保持信息简洁清晰，方便在站内展示你的个人形象。
+              </Text>
+            </div>
+
+            <Form
+              form={profileForm}
+              layout="vertical"
+              requiredMark={false}
+              className="profile-edit-form"
+            >
+              <Form.Item
+                label="昵称"
+                name="userName"
+                rules={[
+                  { required: true, message: "请输入昵称" },
+                  { max: 256, message: "昵称长度不能超过 256 个字符" },
+                ]}
+              >
+                <Input
+                  size="large"
+                  maxLength={256}
+                  showCount
+                  placeholder="例如：前端求职冲刺中"
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="头像"
+                extra="支持 JPG、PNG、SVG、WEBP，单个文件不超过 1MB。"
+              >
+                <div className="profile-avatar-upload-card">
+                  <div className="profile-avatar-upload-card__header">
+                    <Text className="profile-avatar-upload-card__title">
+                      直接上传本地头像文件
+                    </Text>
+                    <Text className="profile-avatar-upload-card__desc">
+                      上传完成后，左侧预览会立即更新。
+                    </Text>
+                  </div>
+
+                  <div className="profile-avatar-upload-card__actions">
+                    <Upload
+                      accept=".jpg,.jpeg,.png,.svg,.webp"
+                      maxCount={1}
+                      showUploadList={false}
+                      beforeUpload={beforeAvatarUpload}
+                      customRequest={handleAvatarUpload}
+                    >
+                      <Button
+                        icon={<UploadOutlined />}
+                        loading={uploadingAvatar}
+                        className="profile-avatar-upload-button"
+                      >
+                        {uploadingAvatar ? "头像上传中..." : "上传头像"}
+                      </Button>
+                    </Upload>
+
+                    <Button
+                      onClick={handleResetAvatar}
+                      className="profile-avatar-reset-button"
+                    >
+                      使用默认头像
+                    </Button>
+                  </div>
+                </div>
+              </Form.Item>
+
+              <Form.Item
+                name="userAvatar"
+                hidden
+                rules={[{ max: 1024, message: "头像地址长度不能超过 1024 个字符" }]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                label="个人简介"
+                name="userProfile"
+                rules={[{ max: 512, message: "个人简介不能超过 512 个字符" }]}
+              >
+                <TextArea
+                  rows={6}
+                  maxLength={512}
+                  showCount
+                  placeholder="写下你的岗位方向、擅长领域，或者最近正在冲刺的目标。"
+                />
+              </Form.Item>
+            </Form>
+          </section>
+        </div>
+      </Modal>
 
       <Modal
         title={
