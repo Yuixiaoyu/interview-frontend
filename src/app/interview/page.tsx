@@ -95,7 +95,7 @@ export default function InterViewPage() {
       // 清理轮询间隔
       if (pollIntervalRef.current) {
         console.log("组件卸载，清理轮询间隔");
-        clearInterval(pollIntervalRef.current);
+        clearTimeout(pollIntervalRef.current);
         pollIntervalRef.current = null;
       }
       
@@ -421,65 +421,64 @@ export default function InterViewPage() {
     };
     
     return new Promise((resolve, reject) => {
-      const pollInterval = setInterval(async () => {
-        // 检查是否已取消
-        if (cancelGenerationRef.current) {
-          clearInterval(pollInterval);
+      const clearPollTimer = () => {
+        if (pollIntervalRef.current) {
+          clearTimeout(pollIntervalRef.current);
           pollIntervalRef.current = null;
+        }
+      };
+
+      const runPoll = async () => {
+        if (cancelGenerationRef.current) {
+          clearPollTimer();
           console.log("题目生成已被用户取消");
           reject(new Error("用户取消了题目生成"));
           return;
         }
-        
+
         attempts++;
-        
-        // 更新进度（渐进式增长，但不超过90%）
+
         setGenerationProgress((prev) => {
           const progressIncrement = Math.max(
             1,
-            (90 - prev) / (maxAttempts - attempts + 1)
+            (90 - prev) / Math.max(1, maxAttempts - attempts + 1)
           );
           return Math.min(90, prev + progressIncrement);
         });
-        
+
         try {
           const isComplete = await checkQuestions();
-          
+
           if (isComplete) {
-            // 题目生成完成，立即跳转
-            clearInterval(pollInterval);
-            pollIntervalRef.current = null;
+            clearPollTimer();
             setGenerationProgress(100);
-            
-            if (!cancelGenerationRef.current) { // 确保未被取消
+
+            if (!cancelGenerationRef.current) {
               setModalQuestionGenerating(false);
               message.success("题目生成完成，正在跳转...");
               router.push("/interview/start");
               resolve();
             }
-            
             return;
           }
-          
+
           if (attempts >= maxAttempts) {
-            // 超时，停止轮询
-            clearInterval(pollInterval);
-            pollIntervalRef.current = null;
+            clearPollTimer();
             setModalQuestionGenerating(false);
             reject(new Error("题目生成超时，请稍后重试"));
             return;
           }
-          
+
+          pollIntervalRef.current = setTimeout(runPoll, 2000);
         } catch (error) {
-          clearInterval(pollInterval);
-          pollIntervalRef.current = null;
+          clearPollTimer();
           setModalQuestionGenerating(false);
           reject(error);
         }
-      }, 2000); // 每2秒检查一次
-      
-      // 存储间隔ID以便后续清除
-      pollIntervalRef.current = pollInterval;
+      };
+
+      // 先立即检查一次，避免题目已准备好时还额外等待2秒
+      void runPoll();
     });
   };
   
@@ -501,9 +500,9 @@ export default function InterViewPage() {
       // 生成完成后关闭模态框
       setIsModalOpen(false);
       setModalQuestionGenerating(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("题目生成失败:", error);
-      message.error("题目生成失败，请重试");
+      message.error(error?.message || "题目生成失败，请重试");
       setModalQuestionGenerating(false);
     }
   };
@@ -515,7 +514,7 @@ export default function InterViewPage() {
     
     // 清除轮询间隔
     if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
+      clearTimeout(pollIntervalRef.current);
       pollIntervalRef.current = null;
       console.log("已清除轮询间隔，停止向后端发送请求");
     }
@@ -545,7 +544,7 @@ export default function InterViewPage() {
       }
 
       const apiUrl = `http://localhost:8811/api/analyze/fileStream?fileUrl=${encodeURIComponent(fileUrl)}`;
-      const eventSource = new EventSource(apiUrl);
+      const eventSource = new EventSource(apiUrl, { withCredentials: true });
       eventSourceRef.current = eventSource;
 
       let fullText = "";
