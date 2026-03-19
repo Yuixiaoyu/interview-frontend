@@ -2,17 +2,16 @@
  * 面试开始页面
  * 
  * 功能说明：
- * 1. 虚拟人选择：页面加载后显示选择对话框，提供三个Live2D虚拟面试官（Xisitina、Shizuku、Hibiki）供用户选择
+ * 1. 预留虚拟人区域：左侧保留未来虚拟人 / 数字人接入位
  * 2. 实时面试：通过WebSocket与后端建立连接，实现AI面试官与用户的实时对话
- * 3. 语音交互：支持语音识别输入用户回答，AI面试官回答时播放TTS语音并实现口型同步
+ * 3. 语音交互：支持语音识别输入用户回答，AI面试官回答时直接播放TTS语音
  * 4. 设备控制：支持摄像头、麦克风开关，音量监控
  * 5. 录制功能：可选择录制整个面试过程，结束后自动下载
  * 6. 得分系统：实时显示面试得分和用时
  * 
  * 实现方式：
- * - 使用l2d库加载和渲染Live2D虚拟人模型
- * - 初始加载完成后先显示虚拟人选择器，用户选择后才加载主模型和建立WebSocket连接
- * - WebSocket接收AI问题和TTS音频数据，通过AudioContext解码后让虚拟人播放
+ * - 页面进入后直接展示录制设置，完成后建立WebSocket连接
+ * - WebSocket接收AI问题和TTS音频数据，通过AudioContext解码后直接播放
  * - 使用Web Speech API实现语音识别，将用户语音转为文字
  * - 使用MediaRecorder API录制屏幕和音频
  * - 所有状态通过React Hooks管理，确保UI与数据同步
@@ -51,17 +50,10 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/stores";
 import { getAuthToken } from "@/utils/cookie";
 import "./index.css";
-import type { Model } from "l2d";
 import { useMediaDevices } from "./hooks/useMediaDevices";
 import { useScreenRecording } from "./hooks/useScreenRecording";
 import { useVoiceRecognition } from "./hooks/useVoiceRecognition";
 import ChatMessages, { type ChatMessage } from "./components/ChatMessages";
-import LoadingOverlay from "./components/LoadingOverlay";
-
-// 为WebKit AudioContext添加类型定义
-interface WindowWithWebkitAudio extends Window {
-  webkitAudioContext?: typeof AudioContext;
-}
 
 /**
  * 开始面试页面组件
@@ -112,7 +104,8 @@ export default function InterviewStartPage() {
   } = useScreenRecording();
   const [recordingEnabled, setRecordingEnabled] = useState(true);
   const [showRecordingModal, setShowRecordingModal] = useState(false);
-  const [recordingSettingCompleted, setRecordingSettingCompleted] = useState(false);
+  const [recordingSettingCompleted, setRecordingSettingCompleted] =
+    useState(false);
 
   // 语音识别
   const {
@@ -124,19 +117,8 @@ export default function InterviewStartPage() {
     clearRecognizedTexts,
   } = useVoiceRecognition({ audioStream, audioEnabled });
 
-  // Live2D 模型加载状态
-  const l2dRef = useRef<HTMLCanvasElement>(null);
-  const model = useRef<Model>();
-  const [modelReady, setModelReady] = useState(false);
-  const [isModelLoading, setIsModelLoading] = useState(true);
+  // 音频播放上下文
   const audioContextRef = useRef<AudioContext | null>(null);
-  const [motionSyncLoaded, setMotionSyncLoaded] = useState(false);
-  
-  // 虚拟人选择对话框
-  const [showModelSelector, setShowModelSelector] = useState(false);
-  const [selectedModelPath, setSelectedModelPath] = useState<string | null>(null);
-  const modelSelectorRef = useRef<HTMLCanvasElement>(null);
-  const previewModels = useRef<Model[]>([]);
 
   // 对话记录
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -148,7 +130,7 @@ export default function InterviewStartPage() {
         setLoadingResume(true);
         const response: any = await resumeGet();
         if (response && response.data) {
-          setResumeData(response.data );
+          setResumeData(response.data);
           console.log("简历数据获取成功:", response.data);
         } else {
           message.warning("未找到简历数据");
@@ -189,37 +171,20 @@ export default function InterviewStartPage() {
         "秒",
       );
 
-      // 让虚拟人说话
-      if (model.current && motionSyncLoaded) {
-        console.log("🗣️ 虚拟人开始说话");
-        model.current.speak(audioBuffer);
-      } else {
-        console.warn("⚠️ 模型未就绪或MotionSync未加载，无法播放语音");
-        if (!model.current) {
-          console.warn("   - 模型未加载");
-        }
-        if (!motionSyncLoaded) {
-          console.warn("   - MotionSync文件未加载");
-        }
-
-        // 如果模型未就绪，直接播放音频
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-        source.start();
-        console.log("🔊 直接播放音频");
-      }
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContext.destination);
+      source.start();
+      console.log("🔊 直接播放音频");
     } catch (error) {
       console.error("❌ TTS音频解码失败:", error);
       message.error("语音播放失败");
     }
   };
 
-  // WebSocket连接逻辑 - 只有在选择了模型且录屏设置完成后才连接
+  // WebSocket连接逻辑 - 录屏设置完成后直接连接
   useEffect(() => {
-    // 调试日志
     console.log("🔍 WebSocket连接条件检查:", {
-      selectedModelPath: !!selectedModelPath,
       recordingSettingCompleted,
       showRecordingModal,
       wsInitialized: wsInitializedRef.current,
@@ -231,8 +196,7 @@ export default function InterviewStartPage() {
       return;
     }
     
-    // 如果还没有选择模型或录屏设置未完成，不连接WebSocket
-    if (!selectedModelPath || !recordingSettingCompleted) {
+    if (!recordingSettingCompleted) {
       console.log("⏸️ WebSocket连接等待中...");
       return;
     }
@@ -510,10 +474,8 @@ export default function InterviewStartPage() {
     // 清理函数 - 只在组件真正卸载时执行
     return () => {
       clearTimeout(timer);
-      // 注意：这里不关闭WebSocket，只清理定时器
-      // WebSocket会在组件最终卸载时由下面的useEffect清理
     };
-  }, [selectedModelPath, recordingSettingCompleted]); // 依赖selectedModelPath和录屏设置完成状态
+  }, [isRecording, recordingSettingCompleted, showRecordingModal, stopScreen]);
   
   // 单独的清理effect，只在组件卸载时执行
   useEffect(() => {
@@ -622,6 +584,25 @@ export default function InterviewStartPage() {
     return `${minutes}:${seconds} / 30:00`;
   };
 
+  // 初始进入页面后直接展示录屏设置，并在卸载时清理音频资源
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowRecordingModal(true);
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+
+      if (
+        audioContextRef.current &&
+        audioContextRef.current.state !== "closed"
+      ) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+    };
+  }, []);
+
   // 录制确认
   const handleRecordingConfirm = () => {
     console.log("📌 用户确认录屏设置, recordingEnabled:", recordingEnabled);
@@ -703,83 +684,6 @@ export default function InterviewStartPage() {
     }
   };
 
-  // 初始加载：显示选择器
-  useEffect(() => {
-    setIsModelLoading(true);
-    
-    // 延迟关闭加载动画，然后显示选择对话框
-    setTimeout(() => {
-      setIsModelLoading(false);
-      setShowModelSelector(true);
-    }, 1000);
-    
-    return () => {
-      model.current?.destroy();
-
-      // 清理AudioContext
-      if (
-        audioContextRef.current &&
-        audioContextRef.current.state !== "closed"
-      ) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
-      
-      // 清理预览模型
-      previewModels.current.forEach(m => m?.destroy());
-    };
-  }, []);
-  
-  // 加载选中的模型
-  useEffect(() => {
-    if (!selectedModelPath) return;
-    
-    setIsModelLoading(true);
-    import("l2d").then(({ init }) => {
-      const l2d = init(l2dRef.current);
-      l2d
-        .create({
-          path: selectedModelPath,
-          scale: 0.3,
-        })
-        .then(async (res) => {
-          model.current = res;
-          setModelReady(true);
-
-          // 加载MotionSync文件以支持口型同步
-          try {
-            // 尝试加载motionsync文件（如果存在）
-            const motionSyncPath = selectedModelPath.replace(/\.model3?\.json$/, '.motionsync3.json');
-            // 使用类型断言，因为l2d库的类型定义可能不完整
-            if (typeof (res as any).loadMotionSyncFromUrl === 'function') {
-              await (res as any).loadMotionSyncFromUrl(motionSyncPath);
-              setMotionSyncLoaded(true);
-              console.log("MotionSync文件加载成功");
-            } else {
-              console.warn("当前l2d版本不支持loadMotionSyncFromUrl方法");
-              setMotionSyncLoaded(false);
-            }
-          } catch (error) {
-            console.warn("MotionSync文件加载失败（可能不存在）:", error);
-            setMotionSyncLoaded(false);
-          }
-
-          // 延迟关闭加载动画
-          setTimeout(() => {
-            setIsModelLoading(false);
-          }, 1000);
-          console.log("模型加载成功");
-        })
-        .catch((error) => {
-          console.error("模型加载失败:", error);
-          message.error("模型加载失败，请重试");
-          setTimeout(() => {
-            setIsModelLoading(false);
-          }, 2000);
-        });
-    });
-  }, [selectedModelPath]);
-
   // 组件卸载时，若仍在录制则自动停止并保存
   useEffect(() => {
     return () => {
@@ -810,142 +714,8 @@ export default function InterviewStartPage() {
     }
   };
 
-  // 处理模型选择
-  const handleModelSelect = (modelPath: string) => {
-    console.log("📌 用户选择了虚拟面试官:", modelPath);
-    setSelectedModelPath(modelPath);
-    setShowModelSelector(false);
-    
-    // 清理预览模型
-    previewModels.current.forEach(m => m?.destroy());
-    previewModels.current = [];
-    
-    message.success("已选择虚拟面试官，正在加载...");
-    
-    // 显示录屏确认对话框
-    setTimeout(() => {
-      console.log("📌 显示录屏设置对话框");
-      setShowRecordingModal(true);
-    }, 500);
-  };
-  
-  // 加载预览模型
-  const loadPreviewModels = async () => {
-    try {
-      const { init } = await import("l2d");
-      const l2d = init(modelSelectorRef.current);
-      
-      const modelConfigs = [
-        {
-          path: "https://model.hacxy.cn/platelet_2/model.json",
-          position: [-60, 20],
-          scale: 0.18,
-          name: "platelet_2"
-        },
-        {
-          path: "https://model.hacxy.cn/shizuku/shizuku.model.json",
-          position: [250, 20],
-          scale: 0.18,
-          name: "Shizuku"
-        },
-        {
-          path: "https://model.hacxy.cn/hibiki/hibiki.model.json",
-          position: [500, 20],
-          scale: 0.18,
-          name: "Hibiki"
-        }
-      ];
-      
-      for (const config of modelConfigs) {
-        try {
-          const model = await l2d.create({
-            path: config.path,
-            position: config.position as [number, number],
-            scale: config.scale,
-          });
-          previewModels.current.push(model);
-          console.log(`${config.name} 预览模型加载成功`);
-        } catch (error) {
-          console.error(`${config.name} 预览模型加载失败:`, error);
-        }
-      }
-    } catch (error) {
-      console.error("预览模型加载失败:", error);
-    }
-  };
-  
-  // 当选择器打开时加载预览模型
-  useEffect(() => {
-    if (showModelSelector && modelSelectorRef.current) {
-      loadPreviewModels();
-    }
-  }, [showModelSelector]);
-
   return (
-    <>
-      <LoadingOverlay isVisible={isModelLoading} />
-      <div className="interview-start-container">
-        {/* 虚拟人选择对话框 */}
-        <Modal
-          title="选择您的AI面试官"
-          open={showModelSelector}
-          footer={null}
-          closable={false}
-          maskClosable={false}
-          width={800}
-          centered
-        >
-          <div style={{ textAlign: "center", marginBottom: "20px" }}>
-            <Typography.Text type="secondary">
-              请选择一位虚拟面试官陪伴您完成本次面试
-            </Typography.Text>
-          </div>
-          
-          <div style={{ height: "500px", marginBottom: "20px", position: "relative" }}>
-            <canvas 
-              ref={modelSelectorRef} 
-              style={{ 
-                width: "100%", 
-                height: "100%",
-                border: "1px solid #f0f0f0",
-                borderRadius: "8px",
-                backgroundColor: "#fafafa"
-              }} 
-            />
-          </div>
-          
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-around", 
-            gap: "16px" 
-          }}>
-            <Button
-              type="primary"
-              size="large"
-              style={{ flex: 1 }}
-              onClick={() => handleModelSelect("https://model.hacxy.cn/platelet_2/model.json")}
-            >
-              选择 platelet_2
-            </Button>
-            <Button
-              type="primary"
-              size="large"
-              style={{ flex: 1 }}
-              onClick={() => handleModelSelect("https://model.hacxy.cn/shizuku/shizuku.model.json")}
-            >
-              选择 Shizuku
-            </Button>
-            <Button
-              type="primary"
-              size="large"
-              style={{ flex: 1 }}
-              onClick={() => handleModelSelect("https://model.hacxy.cn/hibiki/hibiki.model.json")}
-            >
-              选择 Hibiki
-            </Button>
-          </div>
-        </Modal>
-        
+    <div className="interview-start-container">
         <Modal
           title="面试录制设置"
           open={showRecordingModal}
@@ -1022,12 +792,33 @@ export default function InterviewStartPage() {
 
             <div className="ai-avatar-container">
               <div className="ai-avatar-placeholder">
-                <canvas ref={l2dRef} />
+                <div className="avatar-slot-visual">
+                  <div className="avatar-slot-orbit avatar-slot-orbit--outer" />
+                  <div className="avatar-slot-orbit avatar-slot-orbit--inner" />
+                  <div className="avatar-slot-core">
+                    <VideoCameraFilled />
+                  </div>
+                </div>
+
+                <div className="avatar-slot-copy">
+                  <div className="avatar-slot-kicker">Virtual Persona Slot</div>
+                  <div className="avatar-slot-title">虚拟人接入位已预留</div>
+                  <div className="avatar-slot-description">
+                    当前页面先保留实时语音面试流程，左侧区域可继续接入你的数字人、
+                    Live2D、视频流或自定义渲染容器。
+                  </div>
+                </div>
+
+                <div className="avatar-slot-tags">
+                  <span>SDK Container</span>
+                  <span>Audio Ready</span>
+                  <span>Future Avatar</span>
+                </div>
               </div>
 
               <div className="ai-info">
-                <div className="ai-title">AI面试官</div>
-                <div className="ai-subtitle">技术面试专家</div>
+                <div className="ai-title">虚拟面试官接入区</div>
+                <div className="ai-subtitle">左侧结构已保留，可直接对接后续虚拟人</div>
               </div>
             </div>
 
@@ -1372,6 +1163,5 @@ export default function InterviewStartPage() {
           </div>
         </div>
       </div>
-    </>
   );
 }
