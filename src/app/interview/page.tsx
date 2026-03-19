@@ -1,7 +1,9 @@
 "use client";
+import "@ant-design/x-markdown/themes/light.css";
 import "./index.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { UploadProps } from "antd";
+import { XMarkdown } from "@ant-design/x-markdown";
 import {
   Alert,
   Badge,
@@ -30,7 +32,6 @@ import {
   LoadingOutlined,
 } from "@ant-design/icons";
 import { uploadFile, questionGet } from "@/api/fileController";
-import ReactMarkdown from "react-markdown";
 import { useRouter } from "next/navigation";
 
 const { Title, Paragraph, Text } = Typography;
@@ -561,10 +562,8 @@ export default function InterViewPage() {
           if (jsonData && jsonData.content && (jsonData.node_is_finish==false)) {
             startReceivingData = true;
             fullText += jsonData.content;
-            
-            // 格式化文本，确保Markdown正确显示
-            const formattedText = formatMarkdownText(fullText);
-            setAnalysisResult(formattedText);
+
+            setAnalysisResult(fullText);
             
             // 滚动到底部
             setTimeout(() => {
@@ -580,9 +579,7 @@ export default function InterViewPage() {
           if (jsonData.node_is_finish) {
             // 将最后一次放回的数据放入的页面中
             fullText += jsonData.content;
-            // 格式化文本，确保Markdown正确显示
-            const formattedText = formatMarkdownText(fullText);
-            setAnalysisResult(formattedText);
+            setAnalysisResult(fullText);
             // 可以在这里添加处理完成节点的逻辑
             console.log("节点完成:", jsonData.node_title);
             console.log("服务端表示传输完成");
@@ -671,28 +668,6 @@ export default function InterViewPage() {
       message.error("启动分析时出现错误");
     }
   };
-  
-  // 格式化Markdown文本
-  const formatMarkdownText = (text: string): string => {
-    // 处理未完成的Markdown标记
-    let formattedText = text;
-    
-    // 确保代码块正确闭合
-    const codeBlockCount = (text.match(/```/g) || []).length;
-    if (codeBlockCount % 2 !== 0) {
-      formattedText += "\n```";
-    }
-    
-    // 确保列表项格式正确
-    const lines = formattedText.split("\n");
-    const lastLine = lines[lines.length - 1];
-    if (lastLine.match(/^(\s*)[*-]\s+/) && !lastLine.trim().endsWith(".") && !lastLine.trim().endsWith("。")) {
-      lines[lines.length - 1] = lastLine + "...";
-      formattedText = lines.join("\n");
-    }
-    
-    return formattedText;
-  };
 
   // 打开文件预览
   const handleOpenPreview = () => {
@@ -764,13 +739,6 @@ export default function InterViewPage() {
     },
   ];
 
-  // 面试统计数据
-  const statsData = [
-    { title: "已完成面试", value: "1,240+", icon: <ScheduleOutlined /> },
-    { title: "面试问题库", value: "5,600+", icon: <FileTextOutlined /> },
-    { title: "平均准确率", value: "96%", icon: <CheckCircleOutlined /> },
-  ];
-
   // 修改Modal打开时的逻辑，设置进度条状态
   const showModal = () => {
     setCurrentStep(resumeUploaded ? 1 : 0);
@@ -814,12 +782,6 @@ export default function InterViewPage() {
     100,
     Math.round((resumeUploaded ? 38 : 8) + (completedDeviceChecks / 3) * 62)
   );
-
-  const readinessLabel = !resumeUploaded
-    ? "上传简历后解锁专属问题路径"
-    : completedDeviceChecks === 3
-      ? "环境已就绪，可直接开始模拟"
-      : `还需完成 ${3 - completedDeviceChecks} 项设备确认`;
 
   const secondaryHeroAction = resumeUploaded
     ? handleAnalyzeResume
@@ -867,29 +829,6 @@ export default function InterViewPage() {
             </div>
           </div>
 
-          <div className="hero-aside">
-            <div className="readiness-card">
-              <div className="readiness-ring">
-                <div className="readiness-core">
-                  <span className="readiness-caption">面试就绪度</span>
-                  <span className="readiness-value">{readinessPercent}%</span>
-                  <span className="readiness-label">{readinessLabel}</span>
-                </div>
-              </div>
-
-              <div className="hero-signal-list">
-                {statsData.map((stat) => (
-                  <div className="hero-signal-item" key={stat.title}>
-                    <div className="hero-signal-icon">{stat.icon}</div>
-                    <div>
-                      <div className="hero-signal-value">{stat.value}</div>
-                      <div className="hero-signal-title">{stat.title}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </section>
 
         <div className="main-section">
@@ -956,31 +895,6 @@ export default function InterViewPage() {
                 ))}
               </div>
             </section>
-
-            <section className="section-card stats-wrapper">
-              <div className="section-header compact">
-                <div>
-                  <span className="section-tag">Signals</span>
-                  <div className="section-title small">
-                    <ScheduleOutlined className="section-icon" />
-                    <span>平台面试数据</span>
-                  </div>
-                </div>
-                <Paragraph className="section-note">
-                  题库与反馈样本持续迭代，帮助你更快找到正式面试中最需要强化的表达重点。
-                </Paragraph>
-              </div>
-
-              <div className="stats-items">
-                {statsData.map((stat) => (
-                  <div className="stat-item" key={stat.title}>
-                    <div className="stat-icon">{stat.icon}</div>
-                    <div className="stat-value">{stat.value}</div>
-                    <div className="stat-title">{stat.title}</div>
-                  </div>
-                ))}
-              </div>
-            </section>
           </div>
 
           <aside className="upload-section" id="resume-upload-panel">
@@ -996,7 +910,11 @@ export default function InterViewPage() {
                 </Text>
               </div>
 
-              <div className="upload-readiness-badge">
+              <div
+                className={`upload-readiness-badge ${
+                  resumeUploaded ? "is-ready" : ""
+                }`}
+              >
                 <span className="upload-readiness-label">当前状态</span>
                 <strong>{resumeUploaded ? "已同步简历" : "等待上传"}</strong>
               </div>
@@ -1004,8 +922,16 @@ export default function InterViewPage() {
 
             {!resumeUploaded ? (
               <div className="upload-dropzone">
-                <div className="upload-orbit">
-                  <UploadOutlined />
+                <div className="upload-dropzone-head">
+                  <div className="upload-orbit">
+                    <UploadOutlined />
+                  </div>
+                  <Text strong className="upload-dropzone-title">
+                    上传个人简历
+                  </Text>
+                  <Text className="upload-dropzone-copy">
+                    支持 PDF、Word 文档，上传完成后即可生成更贴合经历的模拟问题。
+                  </Text>
                 </div>
                 <Upload
                   maxCount={1}
@@ -1013,13 +939,14 @@ export default function InterViewPage() {
                   onChange={handleChange}
                   customRequest={customRequest}
                   accept=".pdf,.doc,.docx"
+                  showUploadList={false}
                   className="upload-component"
                 >
                   <Button icon={<UploadOutlined />} className="upload-button">
                     选择文件上传
                   </Button>
-                  <Text className="upload-hint">支持 PDF、Word 文档</Text>
                 </Upload>
+                <Text className="upload-hint">支持 PDF、Word 文档，建议使用最新版本简历</Text>
 
                 <div className="upload-support-grid">
                   <div className="support-card">
@@ -1164,7 +1091,34 @@ export default function InterViewPage() {
               ) : analysisResult ? (
                 <div className="markdown-result-container">
                   <div className="markdown-result" ref={markdownRef} onScroll={handleMarkdownScroll}>
-                    <ReactMarkdown>{analysisResult}</ReactMarkdown>
+                    <div className="analysis-render-shell">
+                      <div className="analysis-render-meta">
+                        <span className={`analysis-render-badge ${analyzing ? "is-live" : "is-done"}`}>
+                          {analyzing ? "Streaming" : "Completed"}
+                        </span>
+                        {fileName ? (
+                          <span className="analysis-render-chip">{fileName}</span>
+                        ) : null}
+                        {fileSize ? (
+                          <span className="analysis-render-chip">{displayFileSize}</span>
+                        ) : null}
+                      </div>
+
+                      <XMarkdown
+                        content={analysisResult}
+                        className="analysis-xmarkdown x-markdown-light"
+                        openLinksInNewTab
+                        streaming={{
+                          hasNextChunk: analyzing,
+                          enableAnimation: true,
+                          tail: true,
+                          animationConfig: {
+                            fadeDuration: 180,
+                            easing: "ease-out",
+                          },
+                        }}
+                      />
+                    </div>
                     {analyzing && (
                       <div className="analyzing-indicator">
                         <Spin size="small" />
